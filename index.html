@@ -132,19 +132,10 @@
     <div class="body">
       <!-- HOLDINGS -->
       <div id="p-posn">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="run-btn" id="edit-portfolio-btn">⚙ Portföy Düzenle</button></div>
         <table id="holdings-table" style="margin-bottom:8px">
-          <thead><tr><th style="width:20%">Varlık</th><th style="width:12%;text-align:right">Miktar</th><th style="width:14%;text-align:right">Fiyat</th><th style="width:18%;text-align:right">Değer</th><th style="width:10%;text-align:right">%</th><th style="width:12%;text-align:right">Sınıf</th></tr></thead>
-          <tbody>
-            <tr id="hr-altin"><td>GRAM ALTIN</td><td style="text-align:right;font-size:9px">50 g</td><td style="text-align:right;font-size:9px" id="ht-altin-p">6.500,00</td><td style="text-align:right;color:var(--green)" id="ht-altin-v">₺325.000</td><td style="text-align:right;color:var(--text2)" id="ht-altin-pct">46.4%</td><td style="text-align:right;font-size:9px">Emtia</td></tr>
-            <tr id="hr-tl"><td>TL NAKİT</td><td style="text-align:right;font-size:9px">—</td><td style="text-align:right;font-size:9px">₺1</td><td style="text-align:right;color:var(--green)" id="ht-tl-v">₺100.000</td><td style="text-align:right;color:var(--text2)" id="ht-tl-pct">12.2%</td><td style="text-align:right;font-size:9px">Nakit</td></tr>
-            <tr id="hr-usd"><td>USD NAKİT</td><td style="text-align:right;font-size:9px">1,000.00 $</td><td style="text-align:right;font-size:9px" id="ht-usd-p">46.00</td><td style="text-align:right;color:var(--green)" id="ht-usd-v">₺46.000</td><td style="text-align:right;color:var(--text2)" id="ht-usd-pct">5.9%</td><td style="text-align:right;font-size:9px">Nakit/Döviz</td></tr>
-            <tr id="hr-nvda"><td>NVDA</td><td style="text-align:right;font-size:9px">4 adet</td><td style="text-align:right;font-size:9px" id="ht-nvda-p">$207.32</td><td style="text-align:right;color:var(--green)" id="ht-nvda-v">₺37.720</td><td style="text-align:right;color:var(--text2)" id="ht-nvda-pct">5.4%</td><td style="text-align:right;font-size:9px">Hisse/ABD</td></tr>
-            <tr id="hr-googl"><td>GOOGL</td><td style="text-align:right;font-size:9px">2 adet</td><td style="text-align:right;font-size:9px" id="ht-googl-p">$366.11</td><td style="text-align:right;color:var(--green)" id="ht-googl-v">₺33.580</td><td style="text-align:right;color:var(--text2)" id="ht-googl-pct">4.8%</td><td style="text-align:right;font-size:9px">Hisse/ABD</td></tr>
-            <tr id="hr-tuprs"><td>TUPRS</td><td style="text-align:right;font-size:9px">100 lot</td><td style="text-align:right;font-size:9px" id="ht-tuprs-p">227.50</td><td style="text-align:right;color:var(--green)" id="ht-tuprs-v">₺22.750</td><td style="text-align:right;color:var(--text2)" id="ht-tuprs-pct">2.6%</td><td style="text-align:right;font-size:9px">Hisse/BIST</td></tr>
-            <tr id="hr-asels"><td>ASELS</td><td style="text-align:right;font-size:9px">50 lot</td><td style="text-align:right;font-size:9px" id="ht-asels-p">395.50</td><td style="text-align:right;color:var(--green)" id="ht-asels-v">₺19.775</td><td style="text-align:right;color:var(--text2)" id="ht-asels-pct">2.2%</td><td style="text-align:right;font-size:9px">Hisse/BIST</td></tr>
-            <tr id="hr-mbg"><td>MBG</td><td style="text-align:right;font-size:9px">5 adet</td><td style="text-align:right;font-size:9px" id="ht-mbg-p">€46.90</td><td style="text-align:right;color:var(--green)" id="ht-mbg-v">₺12.455</td><td style="text-align:right;color:var(--text2)" id="ht-mbg-pct">1.4%</td><td style="text-align:right;font-size:9px">Hisse/Avrupa</td></tr>
-            <tr style="background:var(--surface2);font-weight:600" id="hr-total"><td>TOPLAM</td><td></td><td></td><td style="text-align:right;color:var(--green)" id="ht-total-v">₺700.000</td><td style="text-align:right">100%</td><td></td></tr>
-          </tbody>
+          <thead><tr><th style="width:22%">Varlık</th><th style="width:13%;text-align:right">Miktar</th><th style="width:15%;text-align:right">Fiyat</th><th style="width:18%;text-align:right">Değer</th><th style="width:9%;text-align:right">%</th><th style="width:13%;text-align:right">Sınıf</th></tr></thead>
+          <tbody id="holdings-rows"><tr><td colspan="6" style="color:var(--text3);font-size:9px;padding:6px">Canlı veri bekleniyor…</td></tr></tbody>
         </table>
         <div style="margin-bottom:8px">
           <div class="breakdown-bar">
@@ -430,6 +421,30 @@
 
 </div>
 
+<!-- PORTFÖY DÜZENLE MODAL -->
+<div id="pf-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:flex-start;justify-content:center;overflow:auto">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:760px;max-width:94vw;margin:40px 0">
+    <div class="hdr" style="border-radius:8px 8px 0 0">⚙ PORTFÖY DÜZENLE <span class="hdr-desc">varlık ekle/çıkar · kaydet → canlı değerlenir</span></div>
+    <div style="padding:14px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:10px;color:var(--text2)">
+        Baz para birimi:
+        <select id="pf-base" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-family:inherit;font-size:10px"><option>TRY</option><option>USD</option><option>EUR</option></select>
+        <span style="margin-left:auto;color:var(--text3);font-size:9px">Ticker = Yahoo Finance sembolü (ör. AAPL · TUPRS.IS · BTC-USD · GC=F)</span>
+      </div>
+      <table style="font-size:10px"><thead><tr>
+        <th>Ad</th><th>Tür</th><th>Ticker</th><th style="text-align:right">Miktar</th><th>Para</th><th></th>
+      </tr></thead><tbody id="pf-rows"></tbody></table>
+      <button class="run-btn" id="pf-add" style="margin-top:8px">+ Varlık ekle</button>
+      <div id="pf-msg" style="font-size:9px;color:var(--text3);margin-top:8px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+        <button class="run-btn" id="pf-cancel">İptal</button>
+        <button class="run-btn" id="pf-save" style="border-color:var(--green);color:var(--green)">Kaydet & Canlı Değerle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/terminal.js"></script>
+<script src="assets/js/portfolio-edit.js"></script>
 </body>
 </html>

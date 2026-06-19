@@ -58,70 +58,63 @@ def live_refresh():
     except Exception:
         pass
 
-    fxa = port.get("fx_assumptions", {})
-    usdtry, _ = yf_quote("USDTRY=X")
-    eurtry, _ = yf_quote("EURTRY=X")
-    usdtry = usdtry or fxa.get("usdtry", 46.0)
-    eurtry = eurtry or fxa.get("eurtry", 53.0)
-    gold_usd, _ = yf_quote("GC=F")
-    gram_try = (gold_usd * usdtry / GRAM_PER_OZ) if gold_usd else None
+    base = (port.get("base_currency") or "TRY").upper()
 
-    bist_tk = {"TUPRS": "TUPRS.IS", "ASELS": "ASELS.IS"}
-    us_tk = {"NVDA": "NVDA", "GOOGL": "GOOGL"}
-    eu_tk = {"MBG": "MBG.DE"}
+    # FX: ihtiyaç duyulan kurları bir kez çek (ccy → base). base==ccy ise 1.
+    _fx_cache = {base: 1.0}
+    def fx(ccy):
+        ccy = (ccy or base).upper()
+        if ccy in _fx_cache:
+            return _fx_cache[ccy]
+        r, _ = yf_quote(f"{ccy}{base}=X")
+        _fx_cache[ccy] = r or 1.0
+        return _fx_cache[ccy]
 
-    out, fetched = [], 0
+    TYPE_CLASS = {"commodity": "Emtia", "cash": "Nakit", "equity": "Hisse", "crypto": "Kripto", "fund": "Fon"}
+
+    out, fetched, need = [], 0, 0
     for h in holdings:
-        hid, qs = h.get("id"), h.get("quote_source")
-        row = {"id": hid}
-        if qs == "none":  # TL nakit
-            row.update(amount=h.get("amount", 0), value_try=round(h.get("amount", 0)))
-        elif qs == "usdtry":
-            amt = h.get("amount", 0); row.update(amount=amt, rate=usdtry, value_try=round(amt * usdtry))
-        elif qs == "eurtry":
-            amt = h.get("amount", 0); row.update(amount=amt, rate=eurtry, value_try=round(amt * eurtry))
-        elif qs == "gold_try":
-            g = h.get("quantity_grams", 0)
-            if gram_try: fetched += 1
-            row.update(quantity_grams=g, price_try=round(gram_try, 4) if gram_try else None,
-                       value_try=round(g * gram_try) if gram_try else 0)
-        elif qs == "bist":
-            p, _ = yf_quote(bist_tk.get(hid, hid + ".IS")); q = h.get("quantity", 0)
-            if p: fetched += 1
-            row.update(quantity=q, price=p, value_try=round(q * p) if p else 0)
-        elif qs == "us_equity":
-            p, _ = yf_quote(us_tk.get(hid, hid)); q = h.get("quantity", 0)
-            if p: fetched += 1
-            row.update(quantity=q, price=p, price_usd=p, value_try=round(q * p * usdtry) if p else 0)
-        elif qs == "eu_equity":
-            p, _ = yf_quote(eu_tk.get(hid, hid + ".DE")); q = h.get("quantity", 0)
-            if p: fetched += 1
-            row.update(quantity=q, price=p, price_eur=p, value_try=round(q * p * eurtry) if p else 0)
+        hid = h.get("id"); typ = (h.get("type") or "equity").lower()
+        ccy = (h.get("ccy") or base).upper()
+        row = {"id": hid, "name": h.get("name", hid), "type": typ, "ccy": ccy}
+        val = 0
+        if typ == "cash":
+            amt = h.get("amount", 0); rate = fx(ccy)
+            row.update(amount=amt, rate=round(rate, 4)); val = amt * rate
         else:
-            row.update(value_try=0)
+            need += 1
+            q = h.get("quantity", 0); tk = h.get("ticker", "")
+            p, _ = yf_quote(tk) if tk else (None, None)
+            if p: fetched += 1
+            unit_div = GRAM_PER_OZ if (typ == "commodity" and (h.get("unit") == "gram")) else 1.0
+            per_unit = (p / unit_div) if p else None
+            row.update(quantity=q, ticker=tk, price=p,
+                       price_try=round(per_unit * fx(ccy), 4) if per_unit else None)
+            val = (q * per_unit * fx(ccy)) if per_unit else 0
+        row["value_try"] = round(val)
         out.append(row)
 
     nwt = sum(r.get("value_try", 0) for r in out)
-    nwu = round(nwt / usdtry) if usdtry else 0
-    altin = sum(r["value_try"] for r in out if r["id"] == "GRAM_ALTIN")
-    nakit = sum(r["value_try"] for r in out if r["id"] in ("TL_CASH", "USD_CASH", "EUR_CASH"))
-    hisse = sum(r["value_try"] for r in out if r["id"] in ("NVDA", "GOOGL", "TUPRS", "ASELS", "MBG"))
+    usdtry = fx("USD"); nwu = round(nwt / usdtry) if usdtry else 0
     pc = lambda v: round(v / nwt * 10000) / 100 if nwt else 0
+
+    # varlık sınıfı kırılımı (türe göre, dinamik)
+    classes = {}
+    for h, r in zip(holdings, out):
+        cls = TYPE_CLASS.get((h.get("type") or "equity").lower(), "Diğer")
+        classes[cls] = classes.get(cls, 0) + r["value_try"]
+    breakdown = {k: {"value": v, "percentage": pc(v)} for k, v in classes.items()}
 
     latest = {
         "timestamp": datetime.now().astimezone().isoformat(),
+        "base_currency": base,
         "net_worth_try": nwt,
         "net_worth_usd": nwu,
         "prev_net_worth_try": old.get("net_worth_try", nwt),
-        "fx_rates": {"usdtry": round(usdtry, 4), "eurtry": round(eurtry, 4)},
-        "asset_class_breakdown": {
-            "Emtia": {"value": altin, "percentage": pc(altin)},
-            "Nakit": {"value": nakit, "percentage": pc(nakit)},
-            "Hisse": {"value": hisse, "percentage": pc(hisse)},
-        },
+        "fx_rates": {"usdtry": round(fx("USD"), 4), "eurtry": round(fx("EUR"), 4)},
+        "asset_class_breakdown": breakdown,
         "holdings_with_prices": out,
-        "quality_report": {"total_holdings": len(holdings), "successfully_fetched": fetched},
-        # AI bulgular son Claude çalıştırmasından korunur (Python LLM çalıştıramaz)
+        "quality_report": {"total_holdings": len(holdings), "successfully_fetched": fetched, "needs_quote": need},
         "reviewer_findings": old.get("reviewer_findings", []),
         "refresh_source": "live-http",
     }
@@ -219,6 +212,14 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(raw.encode())
             except Exception:
                 self._json({"error": "output/latest.json bulunamadı"}, 404)
+        elif self.path.startswith("/api/portfolio"):
+            # mevcut portföyü forma yükle (yoksa sample)
+            pf = "data/portfolio.json" if os.path.exists("data/portfolio.json") else "data/portfolio.sample.json"
+            try:
+                with open(pf, encoding="utf-8") as f:
+                    self._json(json.load(f))
+            except Exception as e:
+                self._json({"error": str(e)}, 404)
         elif self.path.startswith("/api/history"):
             self._json(_load_history())
         elif self.path.startswith("/api/reports"):
@@ -252,7 +253,26 @@ class Handler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        if self.path.startswith("/api/refresh"):
+        if self.path.startswith("/api/portfolio"):
+            # UI formundan gelen portföyü data/portfolio.json'a yaz, sonra canlı yenile
+            try:
+                ln = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
+                holdings = body.get("holdings", [])
+                if not isinstance(holdings, list):
+                    return self._json({"error": "holdings dizi olmalı"}, 400)
+                doc = {"owner": body.get("owner", "user"),
+                       "base_currency": (body.get("base_currency") or "TRY").upper(),
+                       "note": "UI ⚙ Portföy Düzenle ile kaydedildi.",
+                       "holdings": holdings}
+                os.makedirs("data", exist_ok=True)
+                with open("data/portfolio.json", "w", encoding="utf-8") as f:
+                    json.dump(doc, f, ensure_ascii=False, indent=2)
+                res = live_refresh()  # kaydeder kaydetmez canlı değerle
+                self._json({"status": "saved", "holdings": len(holdings), **res})
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+        elif self.path.startswith("/api/refresh"):
             # Canlı fiyat + net-değer yenile (LLM YOK, sadece HTTP) — UI butonu bunu çağırır
             with LOCK:
                 if STATUS.get("state") == "refreshing":
@@ -314,7 +334,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = 8765
+    port = int(os.environ.get("FINOPS_PORT", "8765"))
     # Güvenlik: varsayılan localhost. Docker için FINOPS_BIND=0.0.0.0 verilir.
     host = os.environ.get("FINOPS_BIND", "127.0.0.1")
     print(f"FinOps Terminal  →  http://localhost:{port}/  (bind {host})")

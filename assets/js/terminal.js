@@ -292,21 +292,28 @@ function updateDashboard(data){
     // ticker'ın kayan kopya setini canlı ilk setle senkronla (stale 387,75 vb. kalmasın)
     try{var _trk=document.getElementById('ticker-track');if(_trk){var _it=_trk.querySelectorAll('.ticker-item');var _half=_it.length/2;for(var _k=_half;_k<_it.length;_k++){_it[_k].innerHTML=_it[_k-_half].innerHTML;}}}catch(e4){}
 
-    function htSet(id,pval,vval){
-      var pe=document.getElementById('ht-'+id+'-p'),ve=document.getElementById('ht-'+id+'-v'),ce=document.getElementById('ht-'+id+'-pct');
-      if(pe&&pval!==undefined)pe.textContent=pval;
-      if(ve&&vval!==undefined)ve.textContent='₺'+fmt(vval);
-      if(ce&&vval!==undefined)ce.textContent=(vval/nwv*100).toFixed(1)+'%';
+    // POZİSYON TABLOSU — holdings'ten dinamik render (her tür: hisse/nakit/emtia/kripto)
+    var CCYSYM={USD:'$',EUR:'€',TRY:'₺',GBP:'£',JPY:'¥'};
+    var TYPELBL={commodity:'Emtia',cash:'Nakit',equity:'Hisse',crypto:'Kripto',fund:'Fon'};
+    var hb=document.getElementById('holdings-rows');
+    if(hb&&hp.length){
+      var hrows='';
+      hp.forEach(function(h){
+        var sym=CCYSYM[h.ccy]||'';
+        var qty = h.type==='cash' ? sym+num(h.amount||0)
+                : num(h.quantity||0)+(h.type==='commodity'?' '+(h.unit||'birim'):(h.type==='crypto'?'':' adet'));
+        var price = h.type==='cash' ? '—' : (h.price!=null?sym+num(h.price):'<span style="color:var(--red)">—</span>');
+        var pct = nwv?(h.value_try/nwv*100).toFixed(1)+'%':'—';
+        hrows+='<tr><td>'+(h.name||h.id)+'</td>'
+          +'<td style="text-align:right;font-size:9px">'+qty+'</td>'
+          +'<td style="text-align:right;font-size:9px">'+price+'</td>'
+          +'<td style="text-align:right;color:var(--green)">₺'+fmt(h.value_try||0)+'</td>'
+          +'<td style="text-align:right;color:var(--text2)">'+pct+'</td>'
+          +'<td style="text-align:right;font-size:9px;color:var(--text3)">'+(TYPELBL[h.type]||h.type||'')+'</td></tr>';
+      });
+      hrows+='<tr style="background:var(--surface2);font-weight:600"><td>TOPLAM</td><td></td><td></td><td style="text-align:right;color:var(--green)">₺'+fmt(nwv)+'</td><td style="text-align:right">100%</td><td></td></tr>';
+      hb.innerHTML=hrows;
     }
-    if(xau)   htSet('altin', num(xau.price_try),   xau.value_try);
-    if(usdH)  htSet('usd',   num(fx.usdtry||0),    usdH.value_try);
-    if(nvdaH) htSet('nvda',  '$'+num(nvdaH.price),  nvdaH.value_try);
-    if(googlH)htSet('googl', '$'+num(googlH.price), googlH.value_try);
-    if(tuprs) htSet('tuprs', num(tuprs.price),      tuprs.value_try);
-    if(asels) htSet('asels', num(asels.price),      asels.value_try);
-    if(mbgH)  htSet('mbg',   '€'+num(mbgH.price),   mbgH.value_try);
-    var tlv=document.getElementById('ht-tl-pct');if(tlv&&tlH)tlv.textContent=(tlH.value_try/nwv*100).toFixed(1)+'%';
-    var totEl=document.getElementById('ht-total-v');if(totEl)totEl.textContent='₺'+fmt(nwv);
 
     // F7 PİYASA TAKİP: portföy holdings (★) + izleme listesi, canlı
     if(typeof renderMarketWatch==='function')renderMarketWatch(data);
