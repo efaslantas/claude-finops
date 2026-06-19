@@ -212,6 +212,34 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(raw.encode())
             except Exception:
                 self._json({"error": "output/latest.json bulunamadı"}, 404)
+        elif self.path.startswith("/api/search"):
+            # Yahoo Finance sembol araması — kullanıcı isim yazar, biz ticker öneririz
+            from urllib.parse import urlparse, parse_qs, quote
+            q = (parse_qs(urlparse(self.path).query).get("q", [""])[0]).strip()
+            if not q:
+                return self._json({"results": []})
+            url = f"https://query1.finance.yahoo.com/v1/finance/search?q={quote(q)}&quotesCount=8&newsCount=0"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            results = []
+            try:
+                with urllib.request.urlopen(req, timeout=6) as r:
+                    d = json.load(r)
+                tmap = {"EQUITY": "equity", "ETF": "fund", "MUTUALFUND": "fund",
+                        "CRYPTOCURRENCY": "crypto", "CURRENCY": "cash", "FUTURE": "commodity",
+                        "INDEX": "equity"}
+                for it in d.get("quotes", []):
+                    sym = it.get("symbol")
+                    if not sym:
+                        continue
+                    results.append({
+                        "symbol": sym,
+                        "name": it.get("shortname") or it.get("longname") or sym,
+                        "exchange": it.get("exchDisp") or it.get("exchange") or "",
+                        "type": tmap.get(it.get("quoteType"), "equity"),
+                    })
+            except Exception:
+                pass
+            self._json({"results": results})
         elif self.path.startswith("/api/portfolio"):
             # mevcut portföyü forma yükle (yoksa sample)
             pf = "data/portfolio.json" if os.path.exists("data/portfolio.json") else "data/portfolio.sample.json"

@@ -63,6 +63,50 @@
       }).catch(function(e){msg.textContent='Hata: '+e;});
   }
 
+  // ── ARA-İLE-EKLE: Yahoo sembol araması + dropdown ──
+  function ccyFromSymbol(sym){
+    var s=(sym||'').toUpperCase();
+    if(/-USD$|=F$/.test(s))return 'USD';
+    if(/\.IS$/.test(s))return 'TRY';
+    if(/\.(DE|PA|AS|MI|MC|BR|VI|LS|HE|F)$/.test(s))return 'EUR';
+    if(/\.L$/.test(s))return 'GBP';
+    if(/\.T$/.test(s))return 'JPY';
+    return 'USD';
+  }
+  var searchEl=document.getElementById('pf-search'), resEl=document.getElementById('pf-results'), tmr=null;
+  function hideRes(){resEl.style.display='none';resEl.innerHTML='';}
+  function showResults(list){
+    if(!list.length){hideRes();return;}
+    resEl.innerHTML=list.map(function(r,i){
+      var ccy=ccyFromSymbol(r.symbol);
+      return '<div class="pf-res" data-i="'+i+'" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);font-size:10px;display:flex;gap:8px;align-items:center">'
+        +'<b style="color:var(--accent);min-width:80px">'+r.symbol+'</b>'
+        +'<span style="flex:1;color:var(--text)">'+r.name+'</span>'
+        +'<span style="color:var(--text3);font-size:9px">'+r.exchange+' · '+ccy+'</span></div>';
+    }).join('');
+    resEl.style.display='block';
+    [].slice.call(resEl.querySelectorAll('.pf-res')).forEach(function(el){
+      el.onclick=function(){
+        var r=list[+el.getAttribute('data-i')];
+        addRow({name:r.name, ticker:r.symbol, type:r.type, ccy:ccyFromSymbol(r.symbol)});
+        searchEl.value=''; hideRes(); searchEl.focus();
+        rowsEl.lastChild.querySelector('[data-k="qty"]').focus();
+      };
+    });
+  }
+  if(searchEl){
+    searchEl.addEventListener('input',function(){
+      var q=searchEl.value.trim();
+      if(tmr)clearTimeout(tmr);
+      if(q.length<2){hideRes();return;}
+      tmr=setTimeout(function(){
+        fetch('/api/search?q='+encodeURIComponent(q)).then(function(r){return r.json();})
+          .then(function(d){showResults((d.results||[]).slice(0,8));}).catch(hideRes);
+      },250);
+    });
+    searchEl.addEventListener('keydown',function(e){if(e.key==='Escape')hideRes();});
+  }
+
   var btn=document.getElementById('edit-portfolio-btn');if(btn)btn.onclick=open;
   document.getElementById('pf-add').onclick=function(){addRow();};
   document.getElementById('pf-cancel').onclick=close;

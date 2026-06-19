@@ -431,10 +431,15 @@
         <select id="pf-base" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-family:inherit;font-size:10px"><option>TRY</option><option>USD</option><option>EUR</option></select>
         <span style="margin-left:auto;color:var(--text3);font-size:9px">Ticker = Yahoo Finance sembolü (ör. AAPL · TUPRS.IS · BTC-USD · GC=F)</span>
       </div>
+      <!-- ARA-İLE-EKLE: isim yaz, listeden seç, satır otomatik dolar -->
+      <div style="position:relative;margin-bottom:10px">
+        <input id="pf-search" autocomplete="off" placeholder="🔍 Hisse/kripto ara (ör. Apple, Tüpraş, Bitcoin) — sembolü bilmene gerek yok" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:5px;padding:7px 10px;font-family:inherit;font-size:11px">
+        <div id="pf-results" style="display:none;position:absolute;top:38px;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;max-height:220px;overflow-y:auto;z-index:10"></div>
+      </div>
       <table style="font-size:10px"><thead><tr>
         <th>Ad</th><th>Tür</th><th>Ticker</th><th style="text-align:right">Miktar</th><th>Para</th><th></th>
       </tr></thead><tbody id="pf-rows"></tbody></table>
-      <button class="run-btn" id="pf-add" style="margin-top:8px">+ Varlık ekle</button>
+      <button class="run-btn" id="pf-add" style="margin-top:8px">+ Manuel satır ekle</button>
       <div id="pf-msg" style="font-size:9px;color:var(--text3);margin-top:8px"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
         <button class="run-btn" id="pf-cancel">İptal</button>
