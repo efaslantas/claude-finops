@@ -1,0 +1,7 @@
+{
+  "daily": [
+    {"date":"2026-01-01","net_worth_try":695000,"net_worth_usd":15109,"source":"pipeline"},
+    {"date":"2026-01-02","net_worth_try":700000,"net_worth_usd":15217,"source":"refresh"}
+  ],
+  "runs": {"pipeline_count": 0, "tokens": 0, "last": null}
+}

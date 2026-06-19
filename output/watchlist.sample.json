@@ -1,0 +1,10 @@
+{
+  "as_of": "2026-01-01T12:00:00Z",
+  "items": [
+    {"market":"BIST","sym":"THYAO","ccy":"TRY","price":320.0,"chg_pct":1.5,"note":"havacılık"},
+    {"market":"BIST","sym":"KCHOL","ccy":"TRY","price":195.0,"chg_pct":0.8,"note":"holding"},
+    {"market":"NASDAQ","sym":"MSFT","ccy":"USD","price":380.0,"chg_pct":0.4,"note":"Azure+Copilot"},
+    {"market":"NASDAQ","sym":"AMD","ccy":"USD","price":520.0,"chg_pct":2.1,"note":"AI çip · NVDA peer"},
+    {"market":"XETRA","sym":"SAP","ccy":"EUR","price":135.0,"chg_pct":-0.6,"note":"bulut/SaaS"}
+  ]
+}

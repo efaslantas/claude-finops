@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "finops-terminal",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["pipeline_server.py"],
+      "port": 8765,
+      "autoPort": false
+    }
+  ]
+}

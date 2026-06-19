@@ -1,0 +1,30 @@
+# ─── Kişisel finansal veri — ASLA COMMIT ETME ───
+# Gerçek portföy / plan / çıktı dosyaları lokal kalır; sadece .sample versiyonları paylaşılır.
+data/*.json
+!data/*.sample.json
+
+output/*.json
+output/*.md
+!output/*.sample.json
+!output/README.md
+
+# Yerel geliştirme notu (kişisel net-değer içerir) — public değil
+STATE.md
+
+# ─── Claude Code yerel ayarlar ───
+.claude/settings.local.json
+
+# ─── env / secrets ───
+.env.local
+.env*.local
+
+# ─── Python / işletim sistemi ───
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+/tmp/
+
+# Claude runtime
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json

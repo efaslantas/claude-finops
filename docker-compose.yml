@@ -1,0 +1,13 @@
+services:
+  finops-terminal:
+    build: .
+    image: efa-finops-terminal
+    container_name: finops-terminal
+    ports:
+      - "8765:8765"
+    # Gerçek verinizi göstermek için lokal data/ ve output/ klasörlerini bağlayın.
+    # (Bağlamazsanız container içindeki .sample verisi gösterilir.)
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+    restart: unless-stopped

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sunucu derleniyor mu? (stdlib, bağımlılık yok)
+        run: python -m py_compile pipeline_server.py
+
+      - name: JSON fixture'ları geçerli mi?
+        run: |
+          python - <<'PY'
+          import json, glob, sys
+          ok = True
+          for f in glob.glob("data/*.json") + glob.glob("output/*.json"):
+              try:
+                  json.load(open(f, encoding="utf-8"))
+                  print("✓", f)
+              except Exception as e:
+                  print("✗", f, e); ok = False
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Örnek veri (.sample) mevcut mu?
+        run: |
+          test -f data/portfolio.sample.json
+          test -f output/latest.sample.json
+          test -f output/watchlist.sample.json
+          echo "✓ sample fixtures present"
+
+      - name: index.html temel kontrol
+        run: |
+          grep -q "assets/css/terminal.css" index.html
+          grep -q "assets/js/terminal.js" index.html
+          echo "✓ index.html assets linked"

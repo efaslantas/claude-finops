@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-01-01T12:00:00+03:00",
+  "net_worth_try": 700000,
+  "net_worth_usd": 15217,
+  "prev_net_worth_try": 695000,
+  "fx_rates": { "usdtry": 46.00, "eurtry": 53.00 },
+  "asset_class_breakdown": {
+    "Emtia": { "value": 325000, "percentage": 46.43 },
+    "Nakit": { "value": 146000, "percentage": 20.86 },
+    "Hisse": { "value": 229000, "percentage": 32.71 }
+  },
+  "holdings_with_prices": [
+    { "id": "GRAM_ALTIN", "quantity_grams": 50, "price_try": 6500, "value_try": 325000 },
+    { "id": "TL_CASH", "amount": 100000, "value_try": 100000 },
+    { "id": "USD_CASH", "amount": 1000, "rate": 46.00, "value_try": 46000 },
+    { "id": "EUR_CASH", "amount": 0, "rate": 53.00, "value_try": 0 },
+    { "id": "NVDA", "quantity": 4, "price": 205, "price_usd": 205, "value_try": 37720 },
+    { "id": "GOOGL", "quantity": 2, "price": 365, "price_usd": 365, "value_try": 33580 },
+    { "id": "TUPRS", "quantity": 100, "price": 227, "value_try": 22700 },
+    { "id": "ASELS", "quantity": 50, "price": 395, "value_try": 19750 },
+    { "id": "MBG", "quantity": 5, "price": 47, "price_eur": 47, "value_try": 12455 }
+  ],
+  "quality_report": { "total_holdings": 9, "successfully_fetched": 8 },
+  "reviewer_findings": [
+    { "severity": "BİLGİ", "issue": "ÖRNEK VERİ: Bu output/latest.sample.json örnek bir snapshot'tır. Gerçek analiz için Claude Code'da /workflows finops-full-pipeline çalıştırın." },
+    { "severity": "ÖNERİ", "issue": "Konsantrasyon: Örnek portföyde altın ağırlığı ~%46. Çeşitlendirme dengesi izlenebilir." },
+    { "severity": "BİLGİ", "issue": "YATIRIM TAVSİYESİ DEĞİLDİR. Fiyatlar indikatif/gecikmeli olabilir." }
+  ]
+}

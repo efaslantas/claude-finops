@@ -1,0 +1,23 @@
+# Kişisel veri — image'a girmesin (sadece .sample kopyalanır)
+data/*.json
+!data/*.sample.json
+output/*.json
+output/*.md
+!output/*.sample.json
+!output/README.md
+
+# Gereksiz / büyük
+.git
+.gitignore
+.claude
+__pycache__/
+*.pyc
+.DS_Store
+node_modules
+
+# Dokümanlar (image'da gereksiz)
+README.md
+LICENSE
+STATE.md
+CONTRIBUTING.md
+docs

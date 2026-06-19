@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "market-data": {
+      "command": "uvx",
+      "args": ["your-financial-data-mcp-server"],
+      "env": {
+        "API_KEY": "${MARKET_DATA_API_KEY}"
+      }
+    }
+  }
+}

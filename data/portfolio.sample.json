@@ -1,0 +1,27 @@
+{
+  "owner": "demo",
+  "as_of": "2026-01-01",
+  "base_currency": "TRY",
+  "note": "ÖRNEK portföy — kendi miktarlarınızla data/portfolio.json oluşturun. Gerçek veri değildir.",
+  "fx_assumptions": { "usdtry": 46.00, "eurtry": 53.00 },
+  "holdings": [
+    { "id": "TL_CASH",    "name": "TL Nakit",       "asset_class": "cash",      "market": "deposit","currency": "TRY", "amount": 100000,       "valuation_method": "face_value",   "quote_source": "none" },
+    { "id": "USD_CASH",   "name": "USD Nakit",      "asset_class": "cash_fx",   "market": "fx",     "currency": "USD", "amount": 1000,         "valuation_method": "fx_rate",      "quote_source": "usdtry" },
+    { "id": "EUR_CASH",   "name": "EUR Nakit",      "asset_class": "cash_fx",   "market": "fx",     "currency": "EUR", "amount": 0,            "valuation_method": "fx_rate",      "quote_source": "eurtry" },
+    { "id": "NVDA",       "name": "NVIDIA",         "asset_class": "equity",    "market": "NASDAQ", "currency": "USD", "quantity": 4,          "valuation_method": "market_quote", "quote_source": "us_equity" },
+    { "id": "GOOGL",      "name": "Alphabet",       "asset_class": "equity",    "market": "NASDAQ", "currency": "USD", "quantity": 2,          "valuation_method": "market_quote", "quote_source": "us_equity" },
+    { "id": "TUPRS",      "name": "Tüpraş",         "asset_class": "equity",    "market": "BIST",   "currency": "TRY", "quantity": 100,        "valuation_method": "market_quote", "quote_source": "bist" },
+    { "id": "ASELS",      "name": "Aselsan",        "asset_class": "equity",    "market": "BIST",   "currency": "TRY", "quantity": 50,         "valuation_method": "market_quote", "quote_source": "bist" },
+    { "id": "MBG",        "name": "Mercedes-Benz",  "asset_class": "equity",    "market": "XETRA",  "currency": "EUR", "quantity": 5,          "valuation_method": "market_quote", "quote_source": "eu_equity" },
+    { "id": "GRAM_ALTIN", "name": "Gram Altın",     "asset_class": "commodity", "market": "spot",   "currency": "TRY", "quantity_grams": 50,   "valuation_method": "market_quote", "quote_source": "gold_try" }
+  ],
+  "quote_sources": {
+    "bist":      "Borsa İstanbul — TUPRS, ASELS",
+    "us_equity": "Nasdaq — NVDA, GOOGL",
+    "eu_equity": "XETRA — MBG",
+    "gold_try":  "Gram altın TRY spot",
+    "usdtry":    "USD/TRY kuru",
+    "eurtry":    "EUR/TRY kuru",
+    "none":      "Sabit değer (TL nakit)"
+  }
+}

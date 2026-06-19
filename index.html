@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFA FinOps Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/terminal.css">
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">FINOPS<span>TERMINAL</span></div>
+  <div class="top-right">
+    <span id="tok-badge" title="Bu makineden çalıştırılan AI analizleri · harcanan token (F10 detay)" style="font-size:10px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(210,153,34,.3);padding:2px 8px;border-radius:4px;cursor:pointer"><i style="font-style:normal">⚡</i> <span id="tok-badge-val">0 token</span> · <span id="tok-badge-runs">0</span> analiz</span>
+    <span class="status-badge"><span class="status-dot"></span>CANLI</span>
+    <span id="auto-badge" style="font-size:9px;color:var(--text3);letter-spacing:.5px" title="Otomatik yenileme">↻ <span id="auto-cd">5:00</span></span>
+    <span id="clock">--:--:--</span>
+    <span id="hdr-date">--</span>
+  </div>
+</div>
+
+<!-- TOP TICKER -->
+<div class="ticker-bar" id="ticker-bar">
+  <div class="ticker-track" id="ticker-track">
+    <div class="ticker-item"><span class="sym">TUPRS</span> <span class="val" id="tk-tuprs">225,40</span> <span class="chg up" id="tk-tuprs-c">▲0,3%</span></div>
+    <div class="ticker-item"><span class="sym">ASELS</span> <span class="val" id="tk-asels">387,75</span> <span class="chg up" id="tk-asels-c">▲1,2%</span></div>
+    <div class="ticker-item"><span class="sym">NVDA</span> <span class="val" id="tk-nvda">207,32</span> <span class="chg up" id="tk-nvda-c">▲0,4%</span></div>
+    <div class="ticker-item"><span class="sym">GOOGL</span> <span class="val" id="tk-googl">366,11</span> <span class="chg up" id="tk-googl-c">▲3,2%</span></div>
+    <div class="ticker-item"><span class="sym">MBG</span> <span class="val" id="tk-mbg">€46,90</span> <span class="chg dn" id="tk-mbg-c">▼3,9%</span></div>
+    <div class="ticker-item"><span class="sym">THYAO</span> <span class="val">312,00</span> <span class="chg up">▲2,1%</span></div>
+    <div class="ticker-item"><span class="sym">KCHOL</span> <span class="val">163,20</span> <span class="chg up">▲0,8%</span></div>
+    <div class="ticker-item"><span class="sym">AKBNK</span> <span class="val">58,75</span> <span class="chg up">▲1,5%</span></div>
+    <div class="ticker-item"><span class="sym">XAU/TRY</span> <span class="val" id="tk-xau">6.430</span> <span class="chg up" id="tk-xau-c">▲0,4%</span></div>
+    <div class="ticker-item"><span class="sym">USD/TRY</span> <span class="val" id="tk-usd">46,30</span> <span class="chg dn" id="tk-usd-c">▼0,2%</span></div>
+    <div class="ticker-item"><span class="sym">EUR/TRY</span> <span class="val" id="tk-eur">53,53</span> <span class="chg up" id="tk-eur-c">▲0,1%</span></div>
+    <div class="ticker-item"><span class="sym">TUPRS</span> <span class="val">225,40</span> <span class="chg up">▲0,3%</span></div>
+    <div class="ticker-item"><span class="sym">ASELS</span> <span class="val">387,75</span> <span class="chg up">▲1,2%</span></div>
+    <div class="ticker-item"><span class="sym">NVDA</span> <span class="val">207,32</span> <span class="chg up">▲0,4%</span></div>
+    <div class="ticker-item"><span class="sym">GOOGL</span> <span class="val">366,11</span> <span class="chg up">▲3,2%</span></div>
+    <div class="ticker-item"><span class="sym">MBG</span> <span class="val">€46,90</span> <span class="chg dn">▼3,9%</span></div>
+    <div class="ticker-item"><span class="sym">THYAO</span> <span class="val">312,00</span> <span class="chg up">▲2,1%</span></div>
+    <div class="ticker-item"><span class="sym">KCHOL</span> <span class="val">163,20</span> <span class="chg up">▲0,8%</span></div>
+    <div class="ticker-item"><span class="sym">AKBNK</span> <span class="val">58,75</span> <span class="chg up">▲1,5%</span></div>
+    <div class="ticker-item"><span class="sym">XAU/TRY</span> <span class="val">6.430</span> <span class="chg up">▲0,4%</span></div>
+    <div class="ticker-item"><span class="sym">USD/TRY</span> <span class="val">46,30</span> <span class="chg dn">▼0,2%</span></div>
+    <div class="ticker-item"><span class="sym">EUR/TRY</span> <span class="val">53,53</span> <span class="chg up">▲0,1%</span></div>
+  </div>
+</div>
+
+<div class="mkt-bar" id="mkt-bar">
+  <div class="mkt-seg"><div class="mkt-dot" id="md-bist"></div><span class="mkt-name">BIST</span><span id="ms-bist" class="mkt-hours">—</span></div>
+  <div class="mkt-seg"><div class="mkt-dot" id="md-nyse"></div><span class="mkt-name">NYSE</span><span id="ms-nyse" class="mkt-hours">—</span></div>
+  <div class="mkt-seg"><div class="mkt-dot" id="md-xetra"></div><span class="mkt-name">XETRA</span><span id="ms-xetra" class="mkt-hours">—</span></div>
+  <div class="mkt-seg"><div class="mkt-dot" id="md-xau"></div><span class="mkt-name">ALTIN</span><span id="ms-xau" class="mkt-hours">—</span></div>
+  <div class="mkt-bar-right"><span id="ms-net" style="color:var(--text2)">NET DEĞ.</span> <span id="ms-net-val" style="color:var(--green);font-weight:600">₺700.000</span></div>
+</div>
+
+<!-- HERO KPI BANDI -->
+<div class="hero">
+  <div class="hero-card main">
+    <div class="hero-label">Portföy Net Değer</div>
+    <div class="hero-val" id="hero-net">₺—</div>
+    <div class="hero-sub" id="hero-usd">$—</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">Günlük P&amp;L</div>
+    <div class="hero-val sm" id="hero-pnl">—</div>
+    <div class="hero-sub" id="hero-pnl-pct">önceki analize göre</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">Net Değer Trendi <span id="hero-period-sub" style="color:var(--text2);float:right;text-transform:none;letter-spacing:0">—</span></div>
+    <svg id="hero-spark" viewBox="0 0 170 30" preserveAspectRatio="none" style="width:100%;height:26px;margin-top:2px"></svg>
+    <div class="hero-sub" id="hero-period">—</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">Varlık Dağılımı</div>
+    <div class="hero-alloc-bar" id="hero-alloc-bar"><i style="width:65%;background:var(--amber)"></i><i style="width:20%;background:var(--accent)"></i><i style="width:15%;background:var(--green)"></i></div>
+    <div class="hero-leg"><span style="color:var(--amber)">■<b id="hero-emtia">—</b> Emtia</span><span style="color:var(--accent)">■<b id="hero-nakit">—</b> Nakit</span><span style="color:var(--green)">■<b id="hero-hisse">—</b> Hisse</span></div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">Veri Kalitesi</div>
+    <div class="hero-val sm" id="hero-quality">—</div>
+    <div class="hero-sub">canlı · <span id="hero-asof">—</span></div>
+  </div>
+</div>
+
+<!-- RİSK ŞERİDİ -->
+<div class="risk-ribbon" id="risk-ribbon" title="Bulgular paneline git (F8)">
+  <span class="risk-pill ok" id="risk-pill">DENETİM</span>
+  <span class="risk-txt" id="risk-txt">AI bulguları bekleniyor…</span>
+  <span class="risk-more">F8 · tümü →</span>
+</div>
+
+<!-- TRADING FLOOR — kompakt canlı aktivite şeridi -->
+<div class="floor-strip" id="p-floor">
+  <span class="floor-strip-lbl">◈ AGENTS <span id="wfn" style="color:var(--green)">5</span></span>
+  <div class="floor" id="floor"></div>
+  <span class="floor-strip-ctl"><button class="run-btn" id="wf-dec" style="padding:0 6px">−</button><button class="run-btn" id="wf-inc" style="padding:0 6px;margin-left:2px">+</button></span>
+</div>
+
+<div class="container">
+  <!-- LEFT -->
+  <div class="panel left">
+    <div class="hdr">TAKİP LİSTESİ <span style="font-size:8px;color:var(--text3);font-weight:400;margin-left:auto">portföy + izleme</span></div>
+    <div class="body">
+      <!-- gizli: hero ile aynı veriyi besleyen eski metrik ID'leri (updateDashboard kullanır) -->
+      <div style="display:none">
+        <span id="m-total"></span><span id="m-total-sub"></span><span id="m-change"></span><span id="m-change-sub"></span>
+        <span id="fetch-text"></span><i id="fetch-status"></i><i id="m-nw-bar"></i><i id="m-chg-bar"></i><i id="m-qual-bar"></i>
+      </div>
+      <div>
+        <div class="wl-row"><span class="wl-ticker">TUPRS</span><span class="wl-price" id="wl-tuprs">225,40</span><span class="wl-chg" id="wl-tuprs-c">—</span></div>
+        <div class="wl-row"><span class="wl-ticker">ASELS</span><span class="wl-price" id="wl-asels">387,75</span><span class="wl-chg" id="wl-asels-c">—</span></div>
+        <div class="wl-row"><span class="wl-ticker">XAU/g</span><span class="wl-price" id="wl-xau">6.430</span><span class="wl-chg" id="wl-xau-c">—</span></div>
+        <div class="wl-row"><span class="wl-ticker">USD/TRY</span><span class="wl-price" id="wl-usd">46,30</span><span class="wl-chg" id="wl-usd-c">—</span></div>
+        <div class="wl-row"><span class="wl-ticker">EUR/TRY</span><span class="wl-price" id="wl-eur">53,53</span><span class="wl-chg" id="wl-eur-c">—</span></div>
+        <div class="wl-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px"><span class="wl-ticker" style="color:var(--text2);font-size:8px">NET DEĞ.</span><span class="wl-price" id="wl-net" style="color:var(--green);font-weight:700">₺700.000</span><span class="wl-chg" id="wl-net-c">—</span></div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-badge"><div class="status-dot"></div>CANLI</div>
+      <div style="margin-left:auto"><span id="last-update">--:--</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="panel center">
+    <div class="hdr">POZİSYONLAR <span class="hdr-desc">sahip olduğun her varlık — miktar · canlı fiyat · TL değer · ağırlık</span></div>
+    <div class="body">
+      <!-- HOLDINGS -->
+      <div id="p-posn">
+        <table id="holdings-table" style="margin-bottom:8px">
+          <thead><tr><th style="width:20%">Varlık</th><th style="width:12%;text-align:right">Miktar</th><th style="width:14%;text-align:right">Fiyat</th><th style="width:18%;text-align:right">Değer</th><th style="width:10%;text-align:right">%</th><th style="width:12%;text-align:right">Sınıf</th></tr></thead>
+          <tbody>
+            <tr id="hr-altin"><td>GRAM ALTIN</td><td style="text-align:right;font-size:9px">50 g</td><td style="text-align:right;font-size:9px" id="ht-altin-p">6.500,00</td><td style="text-align:right;color:var(--green)" id="ht-altin-v">₺325.000</td><td style="text-align:right;color:var(--text2)" id="ht-altin-pct">46.4%</td><td style="text-align:right;font-size:9px">Emtia</td></tr>
+            <tr id="hr-tl"><td>TL NAKİT</td><td style="text-align:right;font-size:9px">—</td><td style="text-align:right;font-size:9px">₺1</td><td style="text-align:right;color:var(--green)" id="ht-tl-v">₺100.000</td><td style="text-align:right;color:var(--text2)" id="ht-tl-pct">12.2%</td><td style="text-align:right;font-size:9px">Nakit</td></tr>
+            <tr id="hr-usd"><td>USD NAKİT</td><td style="text-align:right;font-size:9px">1,000.00 $</td><td style="text-align:right;font-size:9px" id="ht-usd-p">46.00</td><td style="text-align:right;color:var(--green)" id="ht-usd-v">₺46.000</td><td style="text-align:right;color:var(--text2)" id="ht-usd-pct">5.9%</td><td style="text-align:right;font-size:9px">Nakit/Döviz</td></tr>
+            <tr id="hr-nvda"><td>NVDA</td><td style="text-align:right;font-size:9px">4 adet</td><td style="text-align:right;font-size:9px" id="ht-nvda-p">$207.32</td><td style="text-align:right;color:var(--green)" id="ht-nvda-v">₺37.720</td><td style="text-align:right;color:var(--text2)" id="ht-nvda-pct">5.4%</td><td style="text-align:right;font-size:9px">Hisse/ABD</td></tr>
+            <tr id="hr-googl"><td>GOOGL</td><td style="text-align:right;font-size:9px">2 adet</td><td style="text-align:right;font-size:9px" id="ht-googl-p">$366.11</td><td style="text-align:right;color:var(--green)" id="ht-googl-v">₺33.580</td><td style="text-align:right;color:var(--text2)" id="ht-googl-pct">4.8%</td><td style="text-align:right;font-size:9px">Hisse/ABD</td></tr>
+            <tr id="hr-tuprs"><td>TUPRS</td><td style="text-align:right;font-size:9px">100 lot</td><td style="text-align:right;font-size:9px" id="ht-tuprs-p">227.50</td><td style="text-align:right;color:var(--green)" id="ht-tuprs-v">₺22.750</td><td style="text-align:right;color:var(--text2)" id="ht-tuprs-pct">2.6%</td><td style="text-align:right;font-size:9px">Hisse/BIST</td></tr>
+            <tr id="hr-asels"><td>ASELS</td><td style="text-align:right;font-size:9px">50 lot</td><td style="text-align:right;font-size:9px" id="ht-asels-p">395.50</td><td style="text-align:right;color:var(--green)" id="ht-asels-v">₺19.775</td><td style="text-align:right;color:var(--text2)" id="ht-asels-pct">2.2%</td><td style="text-align:right;font-size:9px">Hisse/BIST</td></tr>
+            <tr id="hr-mbg"><td>MBG</td><td style="text-align:right;font-size:9px">5 adet</td><td style="text-align:right;font-size:9px" id="ht-mbg-p">€46.90</td><td style="text-align:right;color:var(--green)" id="ht-mbg-v">₺12.455</td><td style="text-align:right;color:var(--text2)" id="ht-mbg-pct">1.4%</td><td style="text-align:right;font-size:9px">Hisse/Avrupa</td></tr>
+            <tr style="background:var(--surface2);font-weight:600" id="hr-total"><td>TOPLAM</td><td></td><td></td><td style="text-align:right;color:var(--green)" id="ht-total-v">₺700.000</td><td style="text-align:right">100%</td><td></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-bottom:8px">
+          <div class="breakdown-bar">
+            <div class="breakdown-seg c" style="flex-basis:87.3%">87%</div>
+            <div class="breakdown-seg f" style="flex-basis:9.4%">9%</div>
+            <div class="breakdown-seg e" style="flex-basis:3.3%">3%</div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:8px;margin-top:2px">
+            <span style="color:var(--amber)">■ Emtia</span>
+            <span style="color:var(--accent)">■ Nakit/Döviz</span>
+            <span style="color:var(--green)">■ Hisse</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div id="p-pipe" style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:9px;color:var(--text2);text-transform:uppercase">Pipeline · Canlı</span>
+          <button class="run-btn" id="pipe-run">▶ ÇALIŞTIR</button>
+        </div>
+        <div class="log" id="pipe" style="background:var(--surface2);padding:6px;border-radius:2px">
+          <div class="ln"><span class="st">[··]</span> 1 GİRDİ <span style="color:var(--text3)">······ data/*.json</span></div>
+          <div class="ln"><span class="st">[··]</span> 2 BECERİ <span style="color:var(--text3)">····· finops-agent</span></div>
+          <div class="ln"><span class="st">[··]</span> 3 BAĞLANTI <span style="color:var(--text3)">··· canlı fiyatlar</span></div>
+          <div class="ln"><span class="st">[··]</span> 4 ALT-AJANLAR <span style="color:var(--text3)">retriever+reviewer</span></div>
+          <div class="ln"><span class="st">[··]</span> 5 İŞ-AKIŞI <span style="color:var(--text3)">···· Nx araştırma</span></div>
+          <div class="ln"><span class="st">[··]</span> 6 ÇIKTI <span style="color:var(--text3)">······· rapor+paneller</span></div>
+          <div class="pipe-status" id="pipe-status">&gt; beklemede<span class="cur">_</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span id="row-count">5 varlık</span>
+      <span style="margin-left:auto;font-size:8px">F5 SENARYO · F6 DAĞILIM · F7 PİYASA · F8 BULGULAR · F9 RAPOR · F10 GEÇMİŞ · F12 KLİ</span>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel right">
+    <div class="hdr">DAĞILIM <span class="hdr-desc">portföyün ne kadarı hangi varlık sınıfı / döviz · kur değişim etkisi</span></div>
+    <div class="body">
+
+      <!-- MEVCUT KURLAR -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">
+        <div style="background:var(--bg);padding:6px;border-radius:2px;border:1px solid var(--border)">
+          <div style="font-size:8px;color:var(--text2)">USD/TRY</div>
+          <div id="live-usd-rate" style="font-size:15px;font-weight:700;color:var(--accent)">46,30</div>
+        </div>
+        <div style="background:var(--bg);padding:6px;border-radius:2px;border:1px solid var(--border)">
+          <div style="font-size:8px;color:var(--text2)">EUR/TRY</div>
+          <div id="live-eur-rate" style="font-size:15px;font-weight:700;color:var(--accent)">53,53</div>
+        </div>
+      </div>
+
+      <!-- VARLIK SINIFI & DÖVİZ MARUZİYETİ (görsel) -->
+      <div style="border-top:1px solid var(--border);padding-top:8px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Varlık Sınıfı</div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--amber)">Emtia</span><div class="alloc-track"><div id="rp2-emtia-bar" class="alloc-fill" style="width:46%;background:var(--amber)"></div></div><span id="rp2-emtia-pct" class="alloc-pct" style="color:var(--amber)">—</span></div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--accent)">Nakit</span><div class="alloc-track"><div id="rp2-nakit-bar" class="alloc-fill" style="width:20%;background:var(--accent)"></div></div><span id="rp2-nakit-pct" class="alloc-pct" style="color:var(--accent)">—</span></div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--green)">Hisse</span><div class="alloc-track"><div id="rp2-hisse-bar" class="alloc-fill" style="width:17%;background:var(--green)"></div></div><span id="rp2-hisse-pct" class="alloc-pct" style="color:var(--green)">—</span></div>
+
+        <div style="font-size:9px;color:var(--text2);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.5px">Döviz Maruziyeti</div>
+        <div class="alloc-row"><span class="alloc-lbl">TRY</span><div class="alloc-track"><div id="rp2-try-bar" class="alloc-fill" style="width:78%;background:#d29922"></div></div><span id="rp2-try-pct" class="alloc-pct">—</span></div>
+        <div class="alloc-row"><span class="alloc-lbl">USD</span><div class="alloc-track"><div id="rp2-usd-bar" class="alloc-fill" style="width:16%;background:#388bfd"></div></div><span id="rp2-usd-pct" class="alloc-pct">—</span></div>
+        <div class="alloc-row"><span class="alloc-lbl">EUR</span><div class="alloc-track"><div id="rp2-eur-bar" class="alloc-fill" style="width:2%;background:#a371f7"></div></div><span id="rp2-eur-pct" class="alloc-pct">—</span></div>
+        <div style="font-size:8px;color:var(--text3);margin-top:6px" id="rp2-note">Altın TRY-bazlı sayılır · pozisyon detayı: NET DEĞER ANALİZİ</div>
+      </div>
+
+      <!-- gizli: updateDashboard'ın beslediği eski ID'ler (kırılmasın) -->
+      <div style="display:none">
+        <span id="rp-altin-price"></span><span id="rp-altin-val"></span><span id="rp-altin-pct"></span>
+        <span id="rp-tl-val"></span><span id="rp-tl-pct"></span><span id="rp-usd-price"></span><span id="rp-usd-val"></span><span id="rp-usd-pct"></span>
+        <span id="rp-tuprs-price"></span><span id="rp-tuprs-val"></span><span id="rp-tuprs-pct"></span>
+        <span id="rp-asels-price"></span><span id="rp-asels-val"></span><span id="rp-asels-pct"></span>
+        <span id="rp-nvda-price"></span><span id="rp-nvda-val"></span><span id="rp-nvda-pct"></span>
+        <span id="rp-googl-price"></span><span id="rp-googl-val"></span><span id="rp-googl-pct"></span>
+        <span id="rp-mbg-price"></span><span id="rp-mbg-val"></span><span id="rp-mbg-pct"></span>
+      </div>
+
+      <!-- KUR HASSASİYETİ -->
+      <div style="border-top:1px solid var(--border);padding-top:8px">
+        <div style="font-size:9px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px">KUR HASSASİYETİ</div>
+        <table style="width:100%;font-size:9px;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:2px 4px 2px 4px;font-weight:400;color:var(--text3)">USD/TRY</th>
+              <th style="text-align:right;padding:2px 2px;font-weight:400;color:var(--text3)">Net Değer</th>
+              <th style="text-align:right;padding:2px 4px 2px 2px;font-weight:400;color:var(--text3)">Fark</th>
+            </tr>
+          </thead>
+          <tbody id="scen-rows"></tbody>
+        </table>
+        <div style="margin-top:5px;font-size:8px;color:var(--text3)">Portföy %90 TL bazlı · kura az duyarlı</div>
+      </div>
+
+    </div>
+    <div class="status-bar" id="rp-status"><span style="font-size:8px">Pipeline bekleniyor · F4 → PIPE</span></div>
+  </div>
+</div>
+
+<!-- F-KEY BAR -->
+<div class="fkey-bar">
+  <span class="fkey" data-tgt="p-scen"><b>F5</b> SENARYO</span>
+  <span class="fkey" data-tgt="p-alloc"><b>F6</b> DAĞILIM</span>
+  <span class="fkey" data-tgt="p-dax"><b>F7</b> PİYASA</span>
+  <span class="fkey" data-tgt="p-findings"><b>F8</b> BULGULAR</span>
+  <span class="fkey" data-tgt="p-reports"><b>F9</b> RAPORLAR</span>
+  <span class="fkey" data-tgt="p-history"><b>F10</b> GEÇMİŞ</span>
+  <span class="fkey" data-tgt="p-cli"><b>F12</b> KLİ</span>
+</div>
+
+<!-- WIDE SCROLLABLE PANELS -->
+<div class="wide-section">
+
+  <!-- YEAR-END SCENARIOS -->
+  <div class="wp" id="p-scen">
+    <div class="wh"><span class="wh-key">F5</span> YIL SONU SENARYO <span class="wh-desc">hisselerin kötümser / baz / iyimser hedef fiyatları ve portföye etkisi · yatırım tavsiyesi değil</span></div>
+    <div class="wb wp-grid2">
+      <div>
+        <table>
+          <thead><tr><th>Hisse</th><th style="text-align:right">Şimdi</th><th style="text-align:right" class="scen-bear">🔴 Bear</th><th style="text-align:right" class="scen-base">🟡 Base</th><th style="text-align:right" class="scen-bull">🟢 Bull</th></tr></thead>
+          <tbody id="scen-rows-tbl">
+            <tr><td colspan="5" style="color:var(--text3);font-size:9px;padding:6px">Canlı fiyat bekleniyor…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Portföy Projeksiyonu · <span id="scen-nw" style="color:var(--accent)">~₺700K</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="proj-card bear"><div style="font-size:8px;color:var(--red)">🔴 Bear</div><div id="scen-proj-bear" style="font-size:13px;font-weight:700;color:var(--red)">~₺823K</div><div id="scen-proj-bear-pct" style="font-size:8px;color:var(--red)">-7%</div></div>
+          <div class="proj-card base"><div style="font-size:8px;color:var(--amber)">🟡 Base</div><div id="scen-proj-base" style="font-size:13px;font-weight:700;color:var(--amber)">~₺930K</div><div id="scen-proj-base-pct" style="font-size:8px;color:var(--amber)">+5%</div></div>
+          <div class="proj-card bull"><div style="font-size:8px;color:var(--green)">🟢 Bull</div><div id="scen-proj-bull" style="font-size:13px;font-weight:700;color:var(--green)">~₺970K</div><div id="scen-proj-bull-pct" style="font-size:8px;color:var(--green)">+10%</div></div>
+        </div>
+        <div style="font-size:8px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px">Hisse hedefleri analist konsensüsü · Altın/Nakit sabit · Kur sabit varsayımı. Yatırım tavsiyesi değil.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALLOCATION DETAIL + CURRENCY -->
+  <div class="wp" id="p-alloc">
+    <div class="wh"><span class="wh-key">F6</span> DAĞILIM DETAYI <span class="wh-desc">varlık sınıfı yüzdeleri + hangi para biriminde ne kadar riskin var</span></div>
+    <div class="wb wp-grid2">
+      <div>
+        <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Varlık Sınıfı</div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--amber)">Emtia</span><div class="alloc-track"><div id="alloc-emtia-bar" class="alloc-fill" style="width:65.3%;background:var(--amber)"></div></div><span id="alloc-emtia-pct" class="alloc-pct" style="color:var(--amber)">65,3%</span></div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--accent)">Nakit</span><div class="alloc-track"><div id="alloc-nakit-bar" class="alloc-fill" style="width:20.3%;background:var(--accent)"></div></div><span id="alloc-nakit-pct" class="alloc-pct" style="color:var(--accent)">20,3%</span></div>
+        <div class="alloc-row"><span class="alloc-lbl" style="color:var(--green)">Hisse</span><div class="alloc-track"><div id="alloc-hisse-bar" class="alloc-fill" style="width:14.4%;background:var(--green)"></div></div><span id="alloc-hisse-pct" class="alloc-pct" style="color:var(--green)">14,4%</span></div>
+        <div style="margin-top:8px;font-size:8px;color:var(--text3)" id="alloc-warn">Tek-varlık riski: Altın %65,3 — çeşitlendirme düşük</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Döviz Dağılımı</div>
+        <table style="font-size:9px">
+          <thead><tr><th>Para</th><th style="text-align:right">Tutar</th><th style="text-align:right">TRY</th><th style="text-align:right">%</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--amber)">TRY (altın+BIST+TL nakit)</td><td style="text-align:right">—</td><td id="alloc-try-val" style="text-align:right">₺547K</td><td id="alloc-try-pct" style="text-align:right;color:var(--amber)">78,1%</td></tr>
+            <tr><td style="color:var(--accent)">USD (nakit+NVDA+GOOGL)</td><td id="alloc-usd-amt" style="text-align:right">$1.000,00</td><td id="alloc-usd-try" style="text-align:right">₺140K</td><td id="alloc-usd-pct" style="text-align:right;color:var(--accent)">16,0%</td></tr>
+            <tr><td style="color:var(--accent)">EUR (MBG)</td><td id="alloc-eur-amt" style="text-align:right">€0</td><td id="alloc-eur-try" style="text-align:right">₺13K</td><td id="alloc-eur-pct" style="text-align:right;color:var(--accent)">1,4%</td></tr>
+            <tr style="background:var(--surface2);font-weight:600"><td>TOPLAM</td><td></td><td id="alloc-total" style="text-align:right">₺886K</td><td style="text-align:right">100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL MARKETS -->
+  <div class="wp" id="p-dax">
+    <div class="wh"><span class="wh-key">F7</span> PİYASA TAKİP <span class="wh-desc">portföy hisseleri (★) + izleme listesi · canlı fiyat & günlük değişim · USD/TRY <span id="dax-usd">46,30</span> · EUR/TRY <span id="dax-eur">53,53</span> · <span id="dax-asof">—</span></span></div>
+    <div class="wb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">
+
+      <!-- BIST -->
+      <div>
+        <div style="font-size:9px;color:var(--amber);font-weight:600;text-transform:uppercase;border-bottom:1px solid var(--amber);padding-bottom:4px;margin-bottom:8px">BIST · Borsa Istanbul (TRY)</div>
+        <table>
+          <thead><tr><th>Hisse</th><th style="text-align:right">Fiyat ₺</th><th style="text-align:right">Değ.</th><th>Not</th></tr></thead>
+          <tbody id="mw-bist"><tr><td colspan="4" style="color:var(--text3);font-size:9px;padding:6px">Canlı veri bekleniyor…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- NASDAQ -->
+      <div>
+        <div style="font-size:9px;color:var(--accent);font-weight:600;text-transform:uppercase;border-bottom:1px solid #33ccff;padding-bottom:4px;margin-bottom:8px">NASDAQ · New York (USD)</div>
+        <table>
+          <thead><tr><th>Hisse</th><th style="text-align:right">Fiyat $</th><th style="text-align:right">Değ.</th><th>Not</th></tr></thead>
+          <tbody id="mw-nasdaq"><tr><td colspan="4" style="color:var(--text3);font-size:9px;padding:6px">Canlı veri bekleniyor…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- DAX / XETRA -->
+      <div>
+        <div style="font-size:9px;color:#a371f7;font-weight:600;text-transform:uppercase;border-bottom:1px solid #a371f7;padding-bottom:4px;margin-bottom:8px">XETRA · Frankfurt (EUR)</div>
+        <table>
+          <thead><tr><th>Hisse</th><th style="text-align:right">Fiyat €</th><th style="text-align:right">Değ.</th><th>Not</th></tr></thead>
+          <tbody id="mw-xetra"><tr><td colspan="4" style="color:var(--text3);font-size:9px;padding:6px">Canlı veri bekleniyor…</td></tr></tbody>
+        </table>
+      </div>
+
+    </div>
+    <div style="font-size:8px;color:var(--text3);padding:6px 12px;border-top:1px solid var(--border)">★ portföyde · diğerleri izleme listesi · <span id="dax-asof2">—</span> · canlı/gecikmeli · Yatırım tavsiyesi değil.</div>
+  </div>
+
+  <!-- AGENT BULGULARI — FULL WIDTH -->
+  <div class="wp" id="p-findings">
+    <div class="wh"><span class="wh-key">F8</span> RİSK BULGULARI <span id="findings-count" style="color:var(--red)"></span>
+      <span class="wh-desc">yapay zekânın bulduğu riskler (konsantrasyon, FX, vb.) önem sırasıyla · yatırım tavsiyesi değil</span>
+    </div>
+    <div class="wb">
+      <div id="agent-findings" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="alert info" style="font-size:9px;grid-column:1/-1">▶ Pipeline çalıştır → agent bulgularını gör &nbsp;<span style="color:var(--text3)">( F4 → PİPELİNE veya 5 dk otomatik )</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALİZ RAPORLARI — FULL WIDTH -->
+  <div class="wp" id="p-reports">
+    <div class="wh"><span class="wh-key">F9</span> ANALİZ RAPORLARI <span id="reports-count" style="color:var(--accent)"></span>
+      <span class="wh-desc">çalıştırdığın analizlerin raporları — araştırma · değerleme · model · kazanç</span>
+      <button class="run-btn" id="reports-refresh" style="margin-left:10px">↻ YENİLE</button>
+    </div>
+    <div class="wb" style="display:grid;grid-template-columns:300px 1fr;gap:0;min-height:260px">
+      <!-- LEFT: rapor listesi -->
+      <div id="reports-list" style="border-right:1px solid var(--border);overflow-y:auto;max-height:420px">
+        <div class="alert info" style="font-size:9px;margin:6px">Raporlar yükleniyor…</div>
+      </div>
+      <!-- RIGHT: rapor içeriği -->
+      <div id="reports-view" style="padding:10px 14px;overflow-y:auto;max-height:420px;font-size:11px;line-height:1.6">
+        <div style="color:var(--text3);font-size:9px">← Soldan bir rapor seç</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NET-DEĞER GEÇMİŞİ + TOKEN — FULL WIDTH -->
+  <div class="wp" id="p-history">
+    <div class="wh"><span class="wh-key">F10</span> NET-DEĞER GEÇMİŞİ <span id="hist-count" style="color:var(--accent)"></span>
+      <span class="wh-desc">net değerin gün gün değişimi (trend grafiği) + harcanan AI token</span>
+      <button class="run-btn" id="hist-refresh" style="margin-left:10px">↻ YENİLE</button>
+    </div>
+    <div class="wb wp-grid2">
+      <!-- SOL: sparkline + KPI -->
+      <div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div class="metric" style="flex:1;margin:0"><div class="metric-label">Güncel</div><div class="metric-val" id="hist-cur" style="font-size:16px">—</div><div class="metric-sub" id="hist-cur-chg">—</div></div>
+          <div class="metric" style="flex:1;margin:0"><div class="metric-label">Dönem (ilk→son)</div><div class="metric-val" id="hist-range" style="font-size:16px">—</div><div class="metric-sub" id="hist-range-days">—</div></div>
+        </div>
+        <svg id="hist-spark" viewBox="0 0 320 90" preserveAspectRatio="none" style="width:100%;height:90px;background:var(--bg);border:1px solid var(--border);border-radius:2px"></svg>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--text3);margin-top:3px"><span id="hist-x0">—</span><span id="hist-x1">—</span></div>
+        <!-- TOKEN KUTUSU -->
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">AI Token Kullanımı <span style="color:var(--text3);font-weight:400">· bu makineden çalıştıkça</span></div>
+          <div style="display:flex;gap:8px">
+            <div class="metric" style="flex:1;margin:0"><div class="metric-label">Analiz Sayısı</div><div class="metric-val" id="tok-runs" style="font-size:18px;color:var(--amber)">0</div></div>
+            <div class="metric" style="flex:1;margin:0"><div class="metric-label">Toplam Token</div><div class="metric-val" id="tok-total" style="font-size:18px;color:var(--amber)">0</div></div>
+            <div class="metric" style="flex:1;margin:0"><div class="metric-label">Ort./Analiz</div><div class="metric-val" id="tok-avg" style="font-size:18px">—</div></div>
+          </div>
+          <div id="tok-last" style="font-size:8px;color:var(--text3);margin-top:4px">Son analiz: —</div>
+        </div>
+      </div>
+      <!-- SAĞ: günlük tablo -->
+      <div>
+        <div style="font-size:9px;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Günlük Net-Değer</div>
+        <table style="width:100%;font-size:9.5px;border-collapse:collapse">
+          <thead><tr><th>Tarih</th><th style="text-align:right">Net (₺)</th><th style="text-align:right">USD</th><th style="text-align:right">Δ gün</th><th style="text-align:right">Kaynak</th></tr></thead>
+          <tbody id="hist-rows"><tr><td colspan="5" style="color:var(--text3);font-size:9px;padding:6px">Geçmiş yükleniyor…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINI CLI -->
+  <div class="wp" id="p-cli">
+    <div class="wh"><span class="wh-key">F12</span> MİNİ KLİ <span class="wh-desc">komut satırı — `help` yaz: portföy, skills, dosya komutları</span></div>
+    <div class="wb">
+      <div class="cli-term" id="cli-term">
+        <div style="color:var(--text3)">efa-finops-agentic terminal · `help` yazıp Enter bas</div>
+        <div id="cli-out"></div>
+      </div>
+      <div class="cli-row">
+        <span class="cli-prompt">&#10148; ~/efa-finops</span>
+        <input class="cli-input" id="cli-cmd" autocomplete="off" spellcheck="false" placeholder="komut gir...">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="assets/js/terminal.js"></script>
+</body>
+</html>
