@@ -8,9 +8,9 @@
 
 ![status](https://img.shields.io/badge/status-sandbox-orange) ![license](https://img.shields.io/badge/license-MIT-blue) ![deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen) ![python](https://img.shields.io/badge/python-3.8%2B-blue)
 
-![EFA FinOps Terminal](docs/screenshot.png)
+![EFA FinOps Terminal](docs/banner.svg)
 
-<sub>Ekran görüntüsü yok mu? `./start.sh` ile aç, terminali yakala ve `docs/screenshot.png` olarak kaydet.</sub>
+<sub>Üstteki temsilî banner. Gerçek ekran görüntüsü için `./start.sh` ile aç, terminali yakala ve `docs/screenshot.png` olarak kaydedip bu satırı onunla değiştir.</sub>
 
 ---
 
