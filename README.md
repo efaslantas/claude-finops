@@ -63,18 +63,10 @@ running natively on Claude Code:
 | **Connector** (data access) | Claude WebFetch / Yahoo Finance | `connectors/live-quotes/` |
 | **Subagent** (sub-task) | data-retriever + reviewer | `.claude/agents/<name>.md` |
 
-```
-data/portfolio.json
-      │  intake
-      ▼
-data-retriever (live prices)  →  reviewer (AI risk analysis)
-      │
-      ▼
-output/latest.json  →  terminal UI  (pipeline_server.py · /api/*)
-```
+![Architecture](docs/architecture.svg)
 
 **5 skills:** `finops-agent` (net-worth) · `market-researcher` · `valuation-reviewer` ·
-`model-builder` · `earnings-reviewer`.
+`model-builder` · `earnings-reviewer`. Full technical breakdown → [Architecture deep-dive](#-architecture-deep-dive).
 
 ### 🖥️ The screen (F-keys)
 
@@ -150,18 +142,10 @@ referans uygulamasıdır:
 | **Connector** (veri erişimi) | Claude WebFetch / Yahoo Finance | `connectors/live-quotes/` |
 | **Subagent** (alt görev) | data-retriever + reviewer | `.claude/agents/<ad>.md` |
 
-```
-data/portfolio.json
-      │  intake
-      ▼
-data-retriever (canlı fiyat)  →  reviewer (AI risk analizi)
-      │
-      ▼
-output/latest.json  →  terminal UI  (pipeline_server.py · /api/*)
-```
+![Mimari](docs/architecture.svg)
 
 **5 skill:** `finops-agent` (net-değer) · `market-researcher` · `valuation-reviewer` ·
-`model-builder` · `earnings-reviewer`.
+`model-builder` · `earnings-reviewer`. Tam teknik döküm → [Architecture deep-dive](#-architecture-deep-dive).
 
 ### 🖥️ Ekran (F-tuşları)
 
@@ -179,4 +163,140 @@ MIT — [LICENSE](LICENSE). **Yatırım tavsiyesi değildir.** Kendi araştırma
 
 ---
 
-<div align="center"><sub>Built with <a href="https://claude.com/claude-code">Claude Code</a> · Banner is illustrative; capture a real screenshot to <code>docs/screenshot.png</code> and swap the image link.</sub></div>
+## 🖼️ Screens
+
+Each section is one F-key away on a single page. *(Banner/diagrams above are SVG; drop real captures into
+`docs/` as `screen-<name>.png` and link them here.)*
+
+| Key | Panel | What it shows |
+|---|---|---|
+| — | **Hero band** | Net-worth · daily P&L · trend sparkline · allocation bar · data quality · token badge |
+| — | **Risk ribbon** | Top critical AI finding (click → F8) |
+| — | **Positions** | Every holding: qty · live price · value · weight · class (dynamic, any portfolio) |
+| `F5` | **Scenario** | Bear / base / bull derived from live prices + portfolio impact |
+| `F6` | **Allocation** | Asset-class % + currency exposure + FX sensitivity table |
+| `F7` | **Market watch** | Your holdings (★) + watchlist, live |
+| `F8` | **Risk findings** | `reviewer` subagent output, severity-sorted |
+| `F9` | **Reports** | `output/*.md` skill outputs, markdown-rendered |
+| `F10` | **History** | Daily net-worth trend + AI token usage |
+| `F12` | **Mini CLI** | `help`, `portfolio`, `skills`, … |
+| modal | **⚙ Edit Portfolio** | Search assets by name → ticker auto-filled → save → live-valued |
+
+---
+
+## 🔬 Architecture deep-dive
+
+The system has **two independent data paths** sharing one `output/latest.json`. This separation is
+deliberate — it keeps the always-on server safe while still allowing full AI analysis.
+
+```
+                       ┌─ POST /api/refresh ─→ live_refresh()  [Python, no LLM]  ─┐
+   Terminal UI ────────┤                                                          ├─→ output/latest.json ─→ UI
+                       └─ POST /api/run ─→ signal file ─→ Claude watcher ─→ workflow ┘  [Claude AI]
+```
+
+<details>
+<summary><b>1 · Two data paths & the RCE-safe signal model</b></summary>
+
+- **Path A — `live_refresh()` (Python, no LLM, instant):** reads `data/portfolio.json`, fetches quotes
+  from Yahoo, values every holding into the base currency, writes `output/latest.json`. Powers the
+  **🔄 price refresh** button and the 5-min auto-tick. **Costs zero tokens.**
+- **Path B — Claude pipeline (full AI):** the **▶ button** does *not* let the server execute Claude
+  (that would be a network-reachable RCE). Instead `POST /api/run` writes a **signal file**
+  (`output/pipeline-trigger.json` + sets `pipeline-status.json` to `running`). A **trusted, already-open
+  Claude session** (a watcher cron) sees the signal and runs the `finops-full-pipeline` workflow, which
+  writes `latest.json` + AI `reviewer_findings`. The server **never spawns Claude.** Bind defaults to
+  `127.0.0.1`.
+
+</details>
+
+<details>
+<summary><b>2 · Skill anatomy</b></summary>
+
+Each skill is a markdown file with YAML frontmatter (`name`, `description`) + instructions. Claude Code
+auto-loads it; `/skill-name` or a natural trigger invokes it. The five skills share two subagents.
+
+```
+.claude/skills/finops-agent/SKILL.md        # orchestrator: intake → connector → review → synthesis
+.claude/skills/market-researcher/SKILL.md    # live stock/sector research (news + catalysts + risks)
+.claude/skills/valuation-reviewer/SKILL.md   # P/E · EV/EBITDA · peer comparison
+.claude/skills/model-builder/SKILL.md        # FX / bear-base-bull / accumulation projections
+.claude/skills/earnings-reviewer/SKILL.md    # earnings vs consensus
+```
+</details>
+
+<details>
+<summary><b>3 · Subagent contracts</b></summary>
+
+- **`data-retriever`** — given holdings, fetches live quotes (Yahoo v8 `chart` API), normalizes to the
+  base currency, returns a structured `holdings_with_prices[]` + a `quality_report`. No fabrication: a
+  missing quote is reported as missing.
+- **`reviewer`** — given the valued portfolio, performs methodology checks **and** a genuine AI risk
+  read (concentration, FX exposure, single-asset dominance, sector clustering). Output is a
+  `findings[]` array, each `{severity, issue}` where severity ∈ `KRİTİK / ÖNEMLİ / ÖNERİ / BİLGİ`.
+
+</details>
+
+<details>
+<summary><b>4 · Workflow orchestration (<code>finops-full-pipeline.js</code>)</b></summary>
+
+A deterministic 4-phase pipeline that fans subagents out and synthesizes:
+
+```
+intake     → validate data/portfolio.json
+connector  → data-retriever: live quotes (reads tickers from portfolio.json)
+review     → reviewer: AI findings + approval
+synthesis  → compute breakdown, carry prev net-worth, write latest.json + pipeline-status.json
+```
+Quantities are read from `portfolio.json` (never hardcoded), so any portfolio works.
+</details>
+
+<details>
+<summary><b>5 · Generic valuation model</b></summary>
+
+Every holding declares `type`, `ticker`, `ccy`. Value (in base currency) by type:
+
+| type | formula |
+|---|---|
+| `cash` | `amount × fx(ccy → base)` |
+| `equity` / `crypto` | `quantity × price(ticker) × fx(ccy → base)` |
+| `commodity` | `quantity × price/unitDiv × fx(ccy → base)` — `unitDiv = 31.1035` for gram-of-troy-oz |
+
+`fx(ccy)` fetches `{ccy}{base}=X` once and caches. Asset-class breakdown is computed dynamically from
+the set of types present (Emtia / Nakit / Hisse / Kripto / …).
+</details>
+
+<details>
+<summary><b>6 · API reference</b></summary>
+
+| Method · Path | LLM? | Does |
+|---|---|---|
+| `GET /api/latest` | — | current `latest.json` |
+| `GET /api/history` | — | daily net-worth + token totals |
+| `GET /api/search?q=` | — | Yahoo symbol search (name → ticker) |
+| `GET /api/portfolio` | — | load holdings (for the edit form) |
+| `POST /api/portfolio` | — | save holdings → `live_refresh()` |
+| `POST /api/refresh` | — | live prices → recompute net-worth |
+| `POST /api/run` | — | write AI-analysis **signal** (watcher executes) |
+| `POST /api/record-run?tokens=N` | — | log a pipeline run + tokens |
+</details>
+
+<details>
+<summary><b>7 · <code>portfolio.json</code> schema</b></summary>
+
+```json
+{
+  "base_currency": "TRY",
+  "holdings": [
+    { "id": "NVDA", "name": "NVIDIA", "type": "equity", "ticker": "NVDA", "ccy": "USD", "quantity": 4 },
+    { "id": "TRY_CASH", "name": "TL Nakit", "type": "cash", "ccy": "TRY", "amount": 100000 },
+    { "id": "GOLD", "name": "Gram Altın", "type": "commodity", "ticker": "GC=F", "ccy": "USD", "unit": "gram", "quantity": 50 },
+    { "id": "BTC", "name": "Bitcoin", "type": "crypto", "ticker": "BTC-USD", "ccy": "USD", "quantity": 0.05 }
+  ]
+}
+```
+</details>
+
+---
+
+<div align="center"><sub>Built with <a href="https://claude.com/claude-code">Claude Code</a> · Banner & diagrams are SVG — drop real screenshots into <code>docs/</code> to showcase the live UI.</sub></div>
