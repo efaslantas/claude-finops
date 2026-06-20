@@ -1,11 +1,13 @@
 export const meta = {
   name: 'finops-full-pipeline',
-  description: 'Portföy net-değeri tam otomasyonu — intake → canlı veri → AI analiz → output üretim',
+  description: 'Portföy net-değeri tam otomasyonu — intake → canlı veri → AI analiz → haber/benchmark → rebalans → output',
   phases: [
-    { title: 'Intake',    detail: 'portfolio.json oku, 9 holding doğrula' },
-    { title: 'Connector', detail: 'data-retriever: Yahoo Finance WebFetch (8 URL)' },
-    { title: 'Review',    detail: 'reviewer: AI metodoloji & risk analizi' },
-    { title: 'Synthesis', detail: 'Net-değer hesapla, output/latest.json yaz' },
+    { title: 'Intake',     detail: 'portfolio.json oku, holding doğrula' },
+    { title: 'Connector',  detail: 'data-retriever: Yahoo Finance WebFetch' },
+    { title: 'Review',     detail: 'reviewer: AI metodoloji & risk analizi' },
+    { title: 'Intel',      detail: 'news-sentiment + benchmark-tracker paralel' },
+    { title: 'Rebalance',  detail: 'rebalancer: hedef dağılım delta analizi' },
+    { title: 'Synthesis',  detail: 'output/latest.json + pipeline-status yaz' },
   ]
 }
 
@@ -104,7 +106,7 @@ const fetcher = await agent(
 
 log(`Connector: ${fetcher.quality_report.successfully_fetched}/${fetcher.quality_report.total_holdings} fiyat | ₺${Math.round(fetcher.net_worth_try).toLocaleString('tr-TR')}`)
 
-// ── PHASE 3: REVIEW — AI Portföy Analizi ─────────────────────────────────
+// ── PHASE 3: REVIEW — AI Portföy Analizi + PHASE 4: INTEL (paralel) ────────
 phase('Review')
 const reviewer = await agent(
   `Sen reviewer subagent'ısın. Aşağıdaki portföy verisini metodoloji + gerçek AI analizi ile değerlendir.
@@ -161,7 +163,71 @@ const reviewer = await agent(
 const critCount = reviewer.findings.filter(f => ['KRİTİK','KRITIK'].includes(f.severity)).length
 log(`Review: ${reviewer.findings.length} bulgu (${critCount} kritik) | ${reviewer.approved ? '✅ Onaylı' : '⚠️ Uyarı'}`)
 
-// ── PHASE 4: SYNTHESIS — output/latest.json Yaz ──────────────────────────
+// ── PHASE 4: INTEL — Haber Sentiment + Benchmark (paralel) ───────────────
+phase('Intel')
+const [newsResult, benchResult] = await parallel([
+  () => agent(
+    `Sen news-sentiment subagent'ısın.
+    data/portfolio.json oku — holdings[] içindeki ticker'lara sahip hisseleri bul (en fazla 5 adet).
+    Her biri için WebSearch ile son 7 günlük haberleri ara:
+    "WebSearch: <şirket> <ticker> news 2025"
+    Her haberE sentiment skoru ata: +2 çok pozitif → 0 nötr → -2 çok negatif.
+    Portföy genelinde ortalama sentiment hesapla.
+    Çıktı: { tickers_scanned, avg_sentiment, sentiment_label, top_headlines: [{ticker,title,publisher,date,sentiment}] }`,
+    { label: 'news-sentiment', phase: 'Intel',
+      schema: { type:'object', required:['tickers_scanned','avg_sentiment','sentiment_label','top_headlines'],
+        properties: { tickers_scanned:{type:'number'}, avg_sentiment:{type:'number'},
+          sentiment_label:{type:'string'}, top_headlines:{type:'array'} } } }
+  ),
+  () => agent(
+    `Sen benchmark-tracker subagent'ısın.
+    Aşağıdaki portföy verisiyle endeks karşılaştırması yap.
+
+    NET DEĞER VERİSİ:
+    ${JSON.stringify({ net_worth_try: fetcher.net_worth_try, net_worth_usd: fetcher.net_worth_usd }, null, 2)}
+
+    Yahoo Finance v8 API ile son 30 günlük getirileri çek (WebFetch):
+    1. BIST100: https://query1.finance.yahoo.com/v8/finance/chart/XU100.IS?interval=1d&range=1mo
+    2. S&P500:  https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1mo
+    3. Altın:   https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1mo
+    Her biri için chart.result[0].indicators.quote[0].close array'inden ilk ve son değeri al.
+    Getiri = (son-ilk)/ilk*100
+    Çıktı: { period_days:30, benchmarks:{BIST100:{return_pct},SP500:{return_pct},GOLD:{return_pct}}, summary }`,
+    { label: 'benchmark-tracker', phase: 'Intel',
+      schema: { type:'object', required:['period_days','benchmarks','summary'],
+        properties: { period_days:{type:'number'}, benchmarks:{type:'object'}, summary:{type:'string'} } } }
+  )
+])
+log(`Intel: Sentiment=${newsResult?.sentiment_label||'?'} | BIST100=${benchResult?.benchmarks?.BIST100?.return_pct?.toFixed(1)||'?'}%`)
+
+// ── PHASE 5: REBALANCE ────────────────────────────────────────────────────
+phase('Rebalance')
+const rebalResult = await agent(
+  `Sen rebalancer subagent'ısın.
+
+  MEVCUT PORTFÖY:
+  ${JSON.stringify(fetcher.holdings_with_prices || [], null, 2)}
+
+  NET DEĞER: ₺${Math.round(fetcher.net_worth_try).toLocaleString('tr-TR')}
+
+  VARLIK SINIFI DAĞILIMI (mevcut):
+  ${JSON.stringify({
+    Emtia: { value: Math.round((fetcher.holdings_with_prices || []).find(h=>h.id==='GRAM_ALTIN')?.value_try||0) },
+    Nakit: { value: Math.round(((fetcher.holdings_with_prices || []).find(h=>h.id==='TL_CASH')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='USD_CASH')?.value_try||0)) },
+    Hisse: { value: Math.round(((fetcher.holdings_with_prices || []).find(h=>h.id==='NVDA')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='GOOGL')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='TUPRS')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='ASELS')?.value_try||0)) }
+  }, null, 2)}
+
+  Hedef dağılım: Emtia %40 · Nakit %20 · Hisse %40 (tolerans ±5%)
+  Her sınıf için: mevcut %, hedef %, sapma, gerekli işlem (SAT/AL/DENGE) hesapla.
+  En az 3 kalemde kontrol et. Yatırım tavsiyesi olmadığını not düş.`,
+  { label: 'rebalancer', phase: 'Rebalance',
+    schema: { type:'object', required:['rebalance_needed','deviations','trades','summary'],
+      properties: { rebalance_needed:{type:'boolean'}, deviations:{type:'object'},
+        trades:{type:'array'}, summary:{type:'string'} } } }
+)
+log(`Rebalance: ${rebalResult?.rebalance_needed ? 'Dengeleme gerekli — '+rebalResult.trades.length+' işlem' : 'Denge iyi'}`)
+
+// ── PHASE 6: SYNTHESIS — output/latest.json Yaz ──────────────────────────
 phase('Synthesis')
 
 // holdings_with_prices'dan id → holding map
@@ -232,15 +298,17 @@ Her iki dosya yazıldıktan sonra {"written":true} döndür.`,
   }
 )
 
-log(`✓ Pipeline tamamlandı | Net: ₺${nwt.toLocaleString('tr-TR')} / $${nwu.toLocaleString('en-US')} | Bulgular: ${reviewer.findings.length}`)
+log(`✓ Pipeline tamamlandı | Net: ₺${nwt.toLocaleString('tr-TR')} / $${nwu.toLocaleString('en-US')} | Bulgular: ${reviewer.findings.length} | Sentiment: ${newsResult?.sentiment_label||'?'}`)
 
 return {
-  net_worth_try:   nwt,
-  net_worth_usd:   nwu,
-  fx_rates:        latestJson.fx_rates,
-  finding_count:   reviewer.findings.length,
-  critical_count:  critCount,
-  review_approved: reviewer.approved,
-  output_written:  writer.written,
-  status:          reviewer.approved ? '✅ ONAYLANDI' : '⚠️ BULGULAR MEVCUT'
+  net_worth_try:    nwt,
+  net_worth_usd:    nwu,
+  fx_rates:         latestJson.fx_rates,
+  finding_count:    reviewer.findings.length,
+  critical_count:   critCount,
+  review_approved:  reviewer.approved,
+  output_written:   writer.written,
+  sentiment:        newsResult?.sentiment_label || null,
+  rebalance_needed: rebalResult?.rebalance_needed || false,
+  status:           reviewer.approved ? '✅ ONAYLANDI' : '⚠️ BULGULAR MEVCUT'
 }

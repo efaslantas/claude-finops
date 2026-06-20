@@ -721,7 +721,7 @@ document.addEventListener('keydown',function(e){
     pwd:function(){cl('/Users/efaslantas/Desktop/AI-LAB/efa-finops-agentic');},
     whoami:function(){cl('efaslantas');},
     date:function(){cl(new Date().toString());},
-    skills:function(){cl('finops-agent · pr-review · deep-research · finops-full-pipeline · code-review','#33ff66');},
+    skills:function(){cl('finops-agent · earnings-reviewer · market-researcher · valuation-reviewer · model-builder','#33ff66');cl('statement-auditor · gl-reconciler · month-end-closer · kyc-screener · pitch-builder · meeting-preparer','#fac775');},
     portfolio:function(){cl('Net Worth: &#8378;700.000 | $15.217','#33ff66');cl('Altin: 50g | USD: $1.000 | TL: &#8378;100.000 | NVDA: 4 | GOOGL: 2 | TUPRS: 100lot | ASELS: 50lot | MBG: 5','#7a8fa3');},
     cat:function(arg){if(arg==='CLAUDE.md'){cl('# efa-finops-agentic — FinOps Agent Lab','#ff9500');cl('Skill + Connector + Subagent sandbox.');}else{cl('cat: '+esc(arg||'')+': dosya bulunamadi','#ff4d4d');}},
     clear:function(){co.innerHTML='';}
@@ -734,6 +734,202 @@ document.addEventListener('keydown',function(e){
   // F12 KLİ çipine tıklayınca da odaklan
   var f12=document.querySelector('.fkey[data-tgt="p-cli"]');
   if(f12)f12.addEventListener('click',function(){setTimeout(function(){cc.focus();},250);});
+})();
+
+// ── F3 HABERLER ──────────────────────────────────────────────────────────────
+(function(){
+  var out=document.getElementById('news-out');
+  var inp=document.getElementById('news-ticker');
+  var btn=document.getElementById('news-load');
+  if(!out||!btn) return;
+
+  function sentimentLabel(ts){
+    // Son haberlerin timestamp'lerine göre "yeni" → yüksek puan
+    var ago=Date.now()/1000-ts; // saniye önce
+    return ago<86400?'YENİ':ago<604800?'7G':'ESKİ';
+  }
+  function renderNews(d){
+    if(!d||!d.articles||!d.articles.length){
+      out.innerHTML='<div class="alert info" style="font-size:9px;grid-column:1/-1">Haber bulunamadı ya da API erişim hatası.</div>';
+      return;
+    }
+    var html='';
+    d.articles.forEach(function(a){
+      var ts=a.providerPublishTime||0;
+      var date=ts?new Date(ts*1000).toISOString().slice(0,10):'?';
+      var badge=sentimentLabel(ts);
+      var bcolor=badge==='YENİ'?'var(--green)':badge==='7G'?'var(--amber)':'var(--text3)';
+      html+='<div style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px">'
+        +'<div style="font-size:8px;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:4px">'
+        +'<span>'+esc(a.publisher||'')+'</span>'
+        +'<span style="color:'+bcolor+'">'+badge+' · '+date+'</span></div>'
+        +'<div style="font-size:10px;line-height:1.4;color:var(--text)">'+esc(a.title||'')+'</div>'
+        +(a.link?'<div style="margin-top:4px"><a href="'+esc(a.link)+'" target="_blank" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
+        +'</div>';
+    });
+    out.innerHTML=html;
+    out.style.display='grid';
+  }
+
+  function load(){
+    var ticker=(inp&&inp.value.trim())||'NVDA';
+    out.innerHTML='<div class="alert info" style="font-size:9px;grid-column:1/-1">Haberler yükleniyor: '+esc(ticker)+'…</div>';
+    fetch('/api/news?ticker='+encodeURIComponent(ticker))
+      .then(function(r){return r.json();}).then(renderNews)
+      .catch(function(){out.innerHTML='<div class="alert" style="font-size:9px;grid-column:1/-1">API erişim hatası — server çalışıyor mu?</div>';});
+  }
+
+  btn.addEventListener('click',load);
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')load();});
+  // F3 paneli açılınca otomatik yükle
+  var f3=document.querySelector('.fkey[data-tgt="p-news"]');
+  if(f3)f3.addEventListener('click',function(){setTimeout(load,300);});
+})();
+
+// ── F4 ENDEKS ─────────────────────────────────────────────────────────────────
+(function(){
+  var btn=document.getElementById('bench-load');
+  if(!btn) return;
+
+  function fmtRet(v){
+    if(v===null||v===undefined)return '<span style="color:var(--text3)">—</span>';
+    var c=v>=0?'var(--green)':'var(--red)';
+    return '<span style="color:'+c+';font-weight:700">'+(v>=0?'+':'')+v.toFixed(2)+'%</span>';
+  }
+  function fmtAlpha(a,b){
+    if(a===null||a===undefined||b===null||b===undefined)return '<span style="color:var(--text3)">Yetersiz veri</span>';
+    var alpha=parseFloat(a)-parseFloat(b);
+    var c=alpha>=0?'var(--green)':'var(--red)';
+    return '<span style="color:'+c+';font-weight:700">'+(alpha>=0?'+':'')+alpha.toFixed(2)+'%</span>';
+  }
+
+  function render(d){
+    var pf=d.portfolio_return_try_pct;
+    var b=d.benchmarks||{};
+    var pfEl=document.getElementById('bench-pf');
+    var bistEl=document.getElementById('bench-bist');
+    var spEl=document.getElementById('bench-sp');
+    var goldEl=document.getElementById('bench-gold');
+    var abEl=document.getElementById('bench-alpha-bist');
+    var asEl=document.getElementById('bench-alpha-sp');
+    if(pfEl)pfEl.innerHTML=fmtRet(pf);
+    if(bistEl)bistEl.innerHTML=fmtRet(b.BIST100&&b.BIST100.return_pct);
+    if(spEl)spEl.innerHTML=fmtRet(b.SP500&&b.SP500.return_pct);
+    if(goldEl)goldEl.innerHTML=fmtRet(b.GOLD&&b.GOLD.return_pct);
+    if(abEl)abEl.innerHTML=fmtAlpha(pf,b.BIST100&&b.BIST100.return_pct);
+    if(asEl)asEl.innerHTML=fmtAlpha(pf,b.SP500&&b.SP500.return_pct);
+  }
+
+  function load(){
+    ['bench-pf','bench-bist','bench-sp','bench-gold','bench-alpha-bist','bench-alpha-sp'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.innerHTML='<span style="color:var(--text3)">…</span>';
+    });
+    fetch('/api/benchmark?days=30')
+      .then(function(r){return r.json();}).then(render)
+      .catch(function(){var n=document.getElementById('bench-note');if(n)n.textContent='API erişim hatası.';});
+  }
+
+  btn.addEventListener('click',load);
+  var f4=document.querySelector('.fkey[data-tgt="p-bench"]');
+  if(f4)f4.addEventListener('click',function(){setTimeout(load,300);});
+})();
+
+// ── F11 REBALANS + ALARMLAR ───────────────────────────────────────────────────
+(function(){
+  var rbBtn=document.getElementById('rebalance-load');
+  var rbRows=document.getElementById('rebalance-rows');
+  var rbSumm=document.getElementById('rebalance-summary');
+  var rbTrades=document.getElementById('rebalance-trades');
+  var rbTradeList=document.getElementById('rebalance-trade-list');
+
+  function renderRebalance(d){
+    if(d.error){if(rbSumm)rbSumm.textContent=d.error;return;}
+    if(rbSumm)rbSumm.textContent=d.summary||'';
+    var cur=d.current||{},tgt=d.targets||{},dev=d.deviations||{};
+    var html='';
+    Object.keys(tgt).forEach(function(cls){
+      var c=cur[cls]||0,t=tgt[cls]||0,dv=dev[cls]||0;
+      var inTol=Math.abs(dv)<=d.tolerance_pct;
+      var dvColor=inTol?'var(--green)':dv>0?'var(--amber)':'var(--accent)';
+      var badge=inTol?'<span style="color:var(--green)">✓</span>'
+        :(dv>0?'<span style="color:var(--amber)">SAT</span>':'<span style="color:var(--accent)">AL</span>');
+      html+='<tr><td>'+esc(cls)+'</td>'
+        +'<td style="text-align:right">'+c.toFixed(1)+'%</td>'
+        +'<td style="text-align:right">'+t.toFixed(1)+'%</td>'
+        +'<td style="text-align:right;color:'+dvColor+'">'+(dv>=0?'+':'')+dv.toFixed(1)+'%</td>'
+        +'<td>'+badge+'</td></tr>';
+    });
+    if(rbRows)rbRows.innerHTML=html||'<tr><td colspan="5" style="color:var(--text3)">Veri yok</td></tr>';
+    if(d.trades&&d.trades.length&&rbTrades&&rbTradeList){
+      rbTrades.style.display='block';
+      rbTradeList.innerHTML=d.trades.map(function(t){
+        var c=t.action==='SAT'?'var(--red)':'var(--green)';
+        return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px">'
+          +'<span style="color:'+c+';font-weight:700;min-width:28px">'+t.action+'</span>'
+          +'<span style="color:var(--text2)">'+esc(t.class)+'</span>'
+          +'<span style="color:'+c+'">%'+Math.abs(t.delta_pct).toFixed(1)+'</span>'
+          +'<span style="margin-left:auto;color:var(--text3)">~₺'+Math.round(t.amount_try).toLocaleString('tr-TR')+'</span>'
+          +'<span style="color:var(--text3);font-size:8px;max-width:160px">'+esc(t.reason)+'</span>'
+          +'</div>';
+      }).join('');
+    } else if(rbTrades) rbTrades.style.display='none';
+  }
+
+  function loadRebalance(){
+    if(rbSumm)rbSumm.textContent='Hesaplanıyor…';
+    fetch('/api/rebalance')
+      .then(function(r){return r.json();}).then(renderRebalance)
+      .catch(function(){if(rbSumm)rbSumm.textContent='API erişim hatası.';});
+  }
+
+  if(rbBtn)rbBtn.addEventListener('click',loadRebalance);
+  var f11=document.querySelector('.fkey[data-tgt="p-rebalance"]');
+  if(f11)f11.addEventListener('click',function(){setTimeout(loadRebalance,300);});
+
+  // ── Alarmlar ──
+  var alarmList=document.getElementById('alarm-list');
+  var alarmAdd=document.getElementById('alarm-add');
+  var alarmTicker=document.getElementById('alarm-ticker');
+  var alarmDir=document.getElementById('alarm-dir');
+  var alarmPrice=document.getElementById('alarm-price');
+  var _alarms=[];
+
+  function renderAlarms(){
+    if(!alarmList)return;
+    if(!_alarms.length){alarmList.innerHTML='<div style="color:var(--text3)">Henüz alarm yok — yukarıdan ekle</div>';return;}
+    alarmList.innerHTML=_alarms.map(function(a,i){
+      var arrow=a.dir==='above'?'▲':'▼';
+      return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px">'
+        +'<span style="color:var(--accent);font-weight:700;min-width:60px">'+esc(a.ticker)+'</span>'
+        +'<span style="color:var(--amber)">'+arrow+' '+a.price+'</span>'
+        +'<span style="margin-left:auto;cursor:pointer;color:var(--red)" data-del="'+i+'">×</span></div>';
+    }).join('');
+    alarmList.querySelectorAll('[data-del]').forEach(function(el){
+      el.addEventListener('click',function(){_alarms.splice(+el.getAttribute('data-del'),1);saveAlarms();renderAlarms();});
+    });
+  }
+
+  function saveAlarms(){
+    fetch('/api/alerts',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({alerts:_alarms})}).catch(function(){});
+  }
+
+  if(alarmAdd){
+    alarmAdd.addEventListener('click',function(){
+      var tk=(alarmTicker&&alarmTicker.value.trim())||'';
+      var dir=(alarmDir&&alarmDir.value)||'above';
+      var pr=parseFloat((alarmPrice&&alarmPrice.value)||'0');
+      if(!tk||!pr){return;}
+      _alarms.push({ticker:tk.toUpperCase(),dir:dir,price:pr});
+      if(alarmTicker)alarmTicker.value='';if(alarmPrice)alarmPrice.value='';
+      saveAlarms();renderAlarms();
+    });
+  }
+
+  // Kaydedilmiş alarmları yükle
+  fetch('/api/alerts').then(function(r){return r.json();}).then(function(d){
+    _alarms=(d.alerts||[]);renderAlarms();
+  }).catch(function(){});
 })();
 
 // INIT — canlı veriyi dene (yoksa .sample), o da yoksa generik minimal fallback

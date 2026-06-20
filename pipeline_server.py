@@ -18,6 +18,7 @@ claude/alt süreç çalıştırmaz; AI işini açık Claude Code session'ı (wat
 import json, threading, os, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from datetime import datetime, timezone
+from urllib.parse import urlparse, parse_qs, quote
 
 STATUS = {"state": "idle", "message": "Hazır", "progress": 0}
 LOCK = threading.Lock()
@@ -194,6 +195,153 @@ def record_run(tokens=0):
     return r
 
 
+def fetch_news(ticker, count=6):
+    """Yahoo Finance search API'den haber başlıkları çek."""
+    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={quote(ticker)}&quotesCount=0&newsCount={count}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as r:
+            d = json.load(r)
+        items = []
+        for n in d.get("news", []):
+            items.append({
+                "title": n.get("title", ""),
+                "publisher": n.get("publisher", ""),
+                "providerPublishTime": n.get("providerPublishTime", 0),
+                "link": n.get("link", "")
+            })
+        return {"ticker": ticker, "count": len(items), "articles": items,
+                "as_of": datetime.now(timezone.utc).isoformat()}
+    except Exception as e:
+        return {"ticker": ticker, "count": 0, "articles": [], "error": str(e)}
+
+
+def fetch_benchmark(days=30):
+    """BIST100 + S&P500 + Altın getirisini çek, dönem getirisi hesapla."""
+    rng = "1mo" if days <= 31 else "3mo"
+    benches = [("BIST100", "XU100.IS", "TRY"), ("SP500", "^GSPC", "USD"), ("GOLD", "GC=F", "USD")]
+    result = {}
+    for name, ticker, ccy in benches:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range={rng}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=8) as r:
+                d = json.load(r)
+            closes = d["chart"]["result"][0].get("indicators", {}).get("quote", [{}])[0].get("close", [])
+            closes = [c for c in closes if c is not None]
+            ret = round((closes[-1] - closes[0]) / closes[0] * 100, 2) if len(closes) >= 2 else None
+            result[name] = {"ticker": ticker, "currency": ccy, "return_pct": ret, "points": len(closes)}
+        except Exception:
+            result[name] = {"ticker": ticker, "currency": ccy, "return_pct": None}
+    # Portföy getirisi (history.json'dan)
+    portfolio_return = None
+    try:
+        h = _load_history()
+        daily = h.get("daily", [])
+        if len(daily) >= 2:
+            first = daily[0]["net_worth_try"]; last = daily[-1]["net_worth_try"]
+            portfolio_return = round((last - first) / first * 100, 2) if first else None
+    except Exception:
+        pass
+    return {"period_days": days, "benchmarks": result,
+            "portfolio_return_try_pct": portfolio_return,
+            "as_of": datetime.now(timezone.utc).isoformat()}
+
+
+def fetch_dividends():
+    """Portföydeki hisselerin temettü bilgisini çek."""
+    pf = "data/portfolio.json" if os.path.exists("data/portfolio.json") else "data/portfolio.sample.json"
+    try:
+        with open(pf, encoding="utf-8") as f:
+            port = json.load(f)
+    except Exception:
+        return {"dividends": []}
+    equity_qs = {"bist", "us_equity", "eu_equity", "equity"}
+    results = []
+    for h in port.get("holdings", []):
+        qs = h.get("quote_source", ""); typ = h.get("type", "")
+        if qs not in equity_qs and typ not in ("equity",):
+            continue
+        hid = h.get("id", "")
+        tk = h.get("ticker") or (hid + ".IS" if qs == "bist" else hid)
+        url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{tk}?modules=summaryDetail"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=6) as r:
+                d = json.load(r)
+            sd = d.get("quoteSummary", {}).get("result", [{}])[0].get("summaryDetail", {})
+            results.append({
+                "id": hid, "ticker": tk,
+                "dividend_yield": sd.get("dividendYield", {}).get("raw"),
+                "dividend_rate": sd.get("dividendRate", {}).get("raw"),
+                "ex_dividend_date": sd.get("exDividendDate", {}).get("fmt"),
+                "payout_ratio": sd.get("payoutRatio", {}).get("raw")
+            })
+        except Exception:
+            results.append({"id": hid, "ticker": tk, "error": "veri çekilemedi"})
+    return {"dividends": results, "as_of": datetime.now(timezone.utc).isoformat()}
+
+
+ALERTS_PATH = "output/alerts.json"
+
+def load_alerts():
+    try:
+        with open(ALERTS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"alerts": []}
+
+def save_alerts(data):
+    os.makedirs("output", exist_ok=True)
+    with open(ALERTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def compute_rebalance():
+    """Mevcut asset_class_breakdown vs hedef dağılım — delta ve işlem listesi."""
+    targets = {"Emtia": 40.0, "Nakit": 20.0, "Hisse": 40.0}
+    tolerance = 5.0
+    try:
+        with open("data/targets.json", encoding="utf-8") as f:
+            td = json.load(f)
+            targets = td.get("targets", targets)
+            tolerance = td.get("tolerance_pct", tolerance)
+    except Exception:
+        pass
+    try:
+        with open("output/latest.json", encoding="utf-8") as f:
+            latest = json.load(f)
+    except Exception:
+        return {"error": "output/latest.json bulunamadı. Önce /api/refresh çalıştır."}
+    nwt = latest.get("net_worth_try", 0)
+    breakdown = latest.get("asset_class_breakdown", {})
+    current = {k: v.get("percentage", 0) for k, v in breakdown.items()}
+    deviations, trades = {}, []
+    for cls, tgt in targets.items():
+        curr = current.get(cls, 0)
+        delta = curr - tgt
+        deviations[cls] = round(delta, 2)
+        if abs(delta) > tolerance:
+            trades.append({
+                "action": "SAT" if delta > 0 else "AL",
+                "class": cls,
+                "delta_pct": round(delta, 2),
+                "amount_try": round(abs(delta) / 100 * nwt),
+                "reason": f"{cls} hedeften %{abs(round(delta,1))} {'fazla' if delta > 0 else 'eksik'}"
+            })
+    trades.sort(key=lambda t: abs(t["delta_pct"]), reverse=True)
+    vol = sum(t["amount_try"] for t in trades)
+    return {
+        "rebalance_needed": len(trades) > 0,
+        "current": current, "targets": targets, "tolerance_pct": tolerance,
+        "deviations": deviations, "trades": trades,
+        "total_trade_volume_try": vol, "net_worth_try": nwt,
+        "summary": (f"{len(trades)} sınıf hedef dışı. Toplam hareket: ₺{vol:,.0f}" if trades
+                    else "Denge iyi — tüm sınıflar tolerans içinde."),
+        "as_of": datetime.now(timezone.utc).isoformat()
+    }
+
+
 class Handler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self._cors(); self.end_headers()
@@ -221,6 +369,18 @@ class Handler(SimpleHTTPRequestHandler):
                 self._json({"error": "output/latest.json bulunamadı"}, 404)
         elif self.path.startswith("/api/history"):
             self._json(_load_history())
+        elif self.path.startswith("/api/news"):
+            ticker = parse_qs(urlparse(self.path).query).get("ticker", ["NVDA"])[0]
+            self._json(fetch_news(ticker))
+        elif self.path.startswith("/api/benchmark"):
+            days = int(parse_qs(urlparse(self.path).query).get("days", ["30"])[0])
+            self._json(fetch_benchmark(days))
+        elif self.path.startswith("/api/dividends"):
+            self._json(fetch_dividends())
+        elif self.path.startswith("/api/alerts"):
+            self._json(load_alerts())
+        elif self.path.startswith("/api/rebalance"):
+            self._json(compute_rebalance())
         elif self.path.startswith("/api/reports"):
             # output/ altındaki .md raporları listele (skill çıktıları)
             reports = []
@@ -278,6 +438,13 @@ class Handler(SimpleHTTPRequestHandler):
                         except Exception: pass
             r = record_run(tokens)
             self._json({"status": "recorded", **r})
+        elif self.path.startswith("/api/alerts"):
+            ln = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
+            save_alerts(body)
+            self._json({"status": "saved"})
+        elif self.path.startswith("/api/rebalance"):
+            self._json(compute_rebalance())
         elif self.path.startswith("/api/run"):
             # GÜVENLİ: server claude'u ÇALIŞTIRMAZ — sadece sinyal dosyası yazar.
             # Açık Claude session'ındaki watcher bu sinyali görüp workflow'u çalıştırır.

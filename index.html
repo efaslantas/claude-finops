@@ -179,7 +179,7 @@
     </div>
     <div class="status-bar">
       <span id="row-count">5 varlık</span>
-      <span style="margin-left:auto;font-size:8px">F5 SENARYO · F6 DAĞILIM · F7 PİYASA · F8 BULGULAR · F9 RAPOR · F10 GEÇMİŞ · F12 KLİ</span>
+      <span style="margin-left:auto;font-size:8px">F3 HABER · F4 ENDEKS · F5 SENARYO · F6 DAĞILIM · F7 PİYASA · F8 BULGULAR · F9 RAPOR · F10 GEÇMİŞ · F11 REBALANS · F12 KLİ</span>
     </div>
   </div>
 
@@ -248,12 +248,15 @@
 
 <!-- F-KEY BAR -->
 <div class="fkey-bar">
+  <span class="fkey" data-tgt="p-news"><b>F3</b> HABERLER</span>
+  <span class="fkey" data-tgt="p-bench"><b>F4</b> ENDEKS</span>
   <span class="fkey" data-tgt="p-scen"><b>F5</b> SENARYO</span>
   <span class="fkey" data-tgt="p-alloc"><b>F6</b> DAĞILIM</span>
   <span class="fkey" data-tgt="p-dax"><b>F7</b> PİYASA</span>
   <span class="fkey" data-tgt="p-findings"><b>F8</b> BULGULAR</span>
   <span class="fkey" data-tgt="p-reports"><b>F9</b> RAPORLAR</span>
   <span class="fkey" data-tgt="p-history"><b>F10</b> GEÇMİŞ</span>
+  <span class="fkey" data-tgt="p-rebalance"><b>F11</b> REBALANS</span>
   <span class="fkey" data-tgt="p-cli"><b>F12</b> KLİ</span>
 </div>
 
@@ -409,6 +412,89 @@
           <thead><tr><th>Tarih</th><th style="text-align:right">Net (₺)</th><th style="text-align:right">USD</th><th style="text-align:right">Δ gün</th><th style="text-align:right">Kaynak</th></tr></thead>
           <tbody id="hist-rows"><tr><td colspan="5" style="color:var(--text3);font-size:9px;padding:6px">Geçmiş yükleniyor…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- F3: HABERLER & SENTIMENT -->
+  <div class="wp" id="p-news">
+    <div class="wh"><span class="wh-key">F3</span> HABERLER & SENTİMENT <span class="wh-desc">portföy hisselerinin son haberleri · duygu analizi · kaynak bazlı</span>
+      <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <input id="news-ticker" placeholder="Ticker (ör. NVDA)" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:3px 7px;font-family:inherit;font-size:10px;width:120px">
+        <button class="run-btn" id="news-load">↻ ÇEKL</button>
+      </span>
+    </div>
+    <div class="wb">
+      <div id="news-out" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="alert info" style="font-size:9px;grid-column:1/-1">Ticker gir → ↻ ÇEKL butonuna bas · veya F3 açılınca otomatik yüklenir</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F4: ENDEKS KARŞILAŞTIRMA -->
+  <div class="wp" id="p-bench">
+    <div class="wh"><span class="wh-key">F4</span> ENDEKS KARŞILAŞTIRMA <span class="wh-desc">portföy getirisi vs BIST100 · S&P500 · Altın · son 30 gün</span>
+      <button class="run-btn" id="bench-load" style="margin-left:auto">↻ GÜNCELLE</button>
+    </div>
+    <div class="wb">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div class="metric" style="margin:0"><div class="metric-label">Portföy (TRY)</div><div class="metric-val" id="bench-pf" style="font-size:18px">—</div><div class="metric-sub">30 gün</div></div>
+        <div class="metric" style="margin:0"><div class="metric-label">BIST 100</div><div class="metric-val" id="bench-bist" style="font-size:18px">—</div><div class="metric-sub">XU100.IS</div></div>
+        <div class="metric" style="margin:0"><div class="metric-label">S&P 500</div><div class="metric-val" id="bench-sp" style="font-size:18px">—</div><div class="metric-sub">^GSPC · USD</div></div>
+        <div class="metric" style="margin:0"><div class="metric-label">Altın</div><div class="metric-val" id="bench-gold" style="font-size:18px">—</div><div class="metric-sub">GC=F · USD</div></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:9px;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Alfa (Portföy − Endeks)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--bg);padding:8px;border-radius:3px;border:1px solid var(--border)">
+            <div style="font-size:8px;color:var(--text3)">vs BIST100 (TRY bazlı)</div>
+            <div id="bench-alpha-bist" style="font-size:18px;font-weight:700;margin-top:4px">—</div>
+          </div>
+          <div style="background:var(--bg);padding:8px;border-radius:3px;border:1px solid var(--border)">
+            <div style="font-size:8px;color:var(--text3)">vs S&P500 (USD bazlı, kaba)</div>
+            <div id="bench-alpha-sp" style="font-size:18px;font-weight:700;margin-top:4px">—</div>
+          </div>
+        </div>
+        <div id="bench-note" style="font-size:8px;color:var(--text3);margin-top:8px">Kısa dönem alfa istatistiksel anlamlılık taşımaz. Yatırım tavsiyesi değil.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F11: REBALANS + ALARMLAR -->
+  <div class="wp" id="p-rebalance">
+    <div class="wh"><span class="wh-key">F11</span> REBALANS & ALARMLAR <span class="wh-desc">hedef dağılıma göre alım/satım önerileri · fiyat alarmları</span>
+      <button class="run-btn" id="rebalance-load" style="margin-left:auto">↻ HESAPLA</button>
+    </div>
+    <div class="wb wp-grid2">
+      <!-- Sol: Rebalans -->
+      <div>
+        <div style="font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Portföy Rebalans Analizi <span style="color:var(--text3);font-weight:400">· varsayılan hedef: Emtia %40 · Nakit %20 · Hisse %40</span></div>
+        <div id="rebalance-summary" style="font-size:10px;color:var(--text2);margin-bottom:8px">↻ Hesapla butonuna bas</div>
+        <table style="width:100%;font-size:9px" id="rebalance-table">
+          <thead><tr><th>Sınıf</th><th style="text-align:right">Şimdi</th><th style="text-align:right">Hedef</th><th style="text-align:right">Sapma</th><th>İşlem</th></tr></thead>
+          <tbody id="rebalance-rows"><tr><td colspan="5" style="color:var(--text3);padding:8px">—</td></tr></tbody>
+        </table>
+        <div id="rebalance-trades" style="margin-top:10px;display:none">
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Önerilen İşlemler</div>
+          <div id="rebalance-trade-list"></div>
+        </div>
+        <div style="font-size:8px;color:var(--text3);margin-top:8px">Hedef dağılımı özelleştirmek için <code>data/targets.json</code> oluştur. Yatırım tavsiyesi değil.</div>
+      </div>
+      <!-- Sağ: Alarmlar -->
+      <div>
+        <div style="font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Fiyat Alarmları <span style="color:var(--text3);font-weight:400">· eşik aşınca burada görünür</span></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <input id="alarm-ticker" placeholder="Ticker" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:3px 7px;font-family:inherit;font-size:10px;width:90px">
+          <select id="alarm-dir" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:3px 5px;font-family:inherit;font-size:10px">
+            <option value="above">▲ Üstünde</option>
+            <option value="below">▼ Altında</option>
+          </select>
+          <input id="alarm-price" type="number" placeholder="Fiyat" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:3px 7px;font-family:inherit;font-size:10px;width:80px">
+          <button class="run-btn" id="alarm-add">+ Ekle</button>
+        </div>
+        <div id="alarm-list" style="font-size:9px">
+          <div style="color:var(--text3)">Henüz alarm yok — yukarıdan ekle</div>
+        </div>
       </div>
     </div>
   </div>
