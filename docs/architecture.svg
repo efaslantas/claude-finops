@@ -1,120 +1,125 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" font-family="'JetBrains Mono','SF Mono',monospace">
-  <rect width="1200" height="660" fill="#0b0e14"/>
-  <text x="32" y="40" fill="#e6edf3" font-size="20" font-weight="700">EFA FinOps — Mimari / Architecture</text>
-  <text x="32" y="62" fill="#6e7681" font-size="12">skill + connector + subagent · iki veri yolu: Python canlı-fiyat (LLM yok) ve Claude AI pipeline</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="800" viewBox="0 0 1180 800" font-family="'JetBrains Mono','SF Mono',monospace">
+  <rect width="1180" height="800" fill="#0b0e14"/>
+  <text x="40" y="44" fill="#e6edf3" font-size="22" font-weight="700">EFA FinOps — Mimari Akışı</text>
+  <text x="40" y="68" fill="#6e7681" font-size="13">Tek paylaşılan veri (output/latest.json) · iki bağımsız yol</text>
 
   <!-- legend -->
-  <g font-size="11">
-    <rect x="760" y="30" width="14" height="14" rx="3" fill="#10243f" stroke="#388bfd"/><text x="780" y="42" fill="#8b949e">UI / Server</text>
-    <rect x="880" y="30" width="14" height="14" rx="3" fill="#0f2a1e" stroke="#3fb950"/><text x="900" y="42" fill="#8b949e">Python (LLM yok)</text>
-    <rect x="1030" y="30" width="14" height="14" rx="3" fill="#2a210d" stroke="#d29922"/><text x="1050" y="42" fill="#8b949e">Claude AI</text>
+  <g font-size="12">
+    <rect x="760" y="30" width="14" height="14" rx="3" fill="#0f2a1e" stroke="#3fb950"/><text x="780" y="42" fill="#9fe1cb">Hızlı yol — Python (token yok)</text>
+    <rect x="760" y="54" width="14" height="14" rx="3" fill="#2a210d" stroke="#d29922"/><text x="780" y="66" fill="#fac775">AI yol — Claude (token harcar)</text>
   </g>
 
-  <!-- UI -->
+  <!-- ===== ADIM 1: TARAYICI ===== -->
   <g>
-    <rect x="40" y="100" width="240" height="90" rx="8" fill="#10243f" stroke="#388bfd"/>
-    <text x="56" y="128" fill="#e6edf3" font-size="14" font-weight="700">Terminal UI</text>
-    <text x="56" y="148" fill="#8b949e" font-size="11">index.html · assets/</text>
-    <text x="56" y="166" fill="#6e7681" font-size="10">hero · pozisyonlar · dağılım</text>
-    <text x="56" y="180" fill="#6e7681" font-size="10">⚙ Portföy Düzenle (form + arama)</text>
+    <rect x="430" y="92" width="320" height="86" rx="10" fill="#10243f" stroke="#388bfd" stroke-width="1.5"/>
+    <circle cx="452" cy="116" r="9" fill="#388bfd"/><text x="448" y="120" fill="#fff" font-size="11" font-weight="700">1</text>
+    <text x="470" y="120" fill="#e6edf3" font-size="15" font-weight="700">Tarayıcı · Terminal UI</text>
+    <text x="448" y="142" fill="#8b949e" font-size="11">index.html + assets/ · tek sayfa</text>
+    <text x="448" y="160" fill="#6e7681" font-size="11">net-değer · pozisyon · ⚙ Portföy Düzenle</text>
   </g>
 
-  <!-- Server -->
+  <!-- arrow UI -> server -->
+  <line x1="590" y1="178" x2="590" y2="214" stroke="#388bfd" stroke-width="2" marker-end="url(#b)"/>
+  <text x="600" y="200" fill="#8b949e" font-size="11">HTTP · /api/*</text>
+
+  <!-- ===== ADIM 2: SERVER ===== -->
   <g>
-    <rect x="40" y="250" width="240" height="150" rx="8" fill="#10243f" stroke="#388bfd"/>
-    <text x="56" y="278" fill="#e6edf3" font-size="14" font-weight="700">pipeline_server.py</text>
-    <text x="56" y="296" fill="#6e7681" font-size="10">stdlib · 127.0.0.1 · sıfır bağımlılık</text>
-    <text x="56" y="320" fill="#3fb950" font-size="10">GET  /api/latest · /api/history</text>
-    <text x="56" y="336" fill="#3fb950" font-size="10">GET  /api/search · /api/portfolio</text>
-    <text x="56" y="352" fill="#3fb950" font-size="10">POST /api/refresh  (canlı fiyat)</text>
-    <text x="56" y="368" fill="#3fb950" font-size="10">POST /api/portfolio (kaydet+değerle)</text>
-    <text x="56" y="384" fill="#d29922" font-size="10">POST /api/run  (sinyal → watcher)</text>
+    <rect x="150" y="214" width="880" height="92" rx="10" fill="#0d1b2e" stroke="#388bfd" stroke-width="1.5"/>
+    <circle cx="172" cy="238" r="9" fill="#388bfd"/><text x="168" y="242" fill="#fff" font-size="11" font-weight="700">2</text>
+    <text x="190" y="242" fill="#e6edf3" font-size="15" font-weight="700">pipeline_server.py</text>
+    <text x="330" y="242" fill="#6e7681" font-size="11">· yalnızca Python stdlib · 127.0.0.1 · sıfır bağımlılık</text>
+    <text x="172" y="272" fill="#9fe1cb" font-size="11">GET  /api/latest · /api/history · /api/search · /api/portfolio</text>
+    <text x="172" y="292" fill="#fac775" font-size="11">POST /api/refresh (Python)   ·   POST /api/run (Claude sinyali)   ·   POST /api/portfolio · /api/record-run</text>
   </g>
-  <line x1="160" y1="190" x2="160" y2="250" stroke="#30363d" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="168" y="225" fill="#6e7681" font-size="10">/api polling</text>
 
-  <!-- Path A: Python live -->
+  <!-- split arrows to two lanes -->
+  <path d="M360 306 V330" stroke="#3fb950" stroke-width="2.5" marker-end="url(#g)"/>
+  <path d="M820 306 V330" stroke="#d29922" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- ===== HIZLI YOL (sol, yeşil) ===== -->
+  <rect x="70" y="330" width="500" height="330" rx="12" fill="#0c1a13" stroke="#1e3a2a"/>
+  <text x="92" y="358" fill="#3fb950" font-size="13" font-weight="700">HIZLI YOL · canlı fiyat (LLM yok · anında)</text>
+
   <g>
-    <rect x="360" y="250" width="220" height="150" rx="8" fill="#0f2a1e" stroke="#3fb950"/>
-    <text x="376" y="278" fill="#e6edf3" font-size="14" font-weight="700">live_refresh()</text>
-    <text x="376" y="296" fill="#6e7681" font-size="10">Python · LLM gerekmez</text>
-    <text x="376" y="320" fill="#9fe1cb" font-size="10">• portfolio.json oku</text>
-    <text x="376" y="336" fill="#9fe1cb" font-size="10">• tür-bazlı değerleme</text>
-    <text x="376" y="352" fill="#9fe1cb" font-size="10">  hisse·nakit·emtia·kripto</text>
-    <text x="376" y="368" fill="#9fe1cb" font-size="10">• FX → baz para birimi</text>
-    <text x="376" y="384" fill="#9fe1cb" font-size="10">→ output/latest.json</text>
+    <rect x="92" y="372" width="220" height="56" rx="8" fill="#0f2a1e" stroke="#3fb950"/>
+    <circle cx="112" cy="392" r="8" fill="#3fb950"/><text x="108" y="396" fill="#04120b" font-size="10" font-weight="700">3</text>
+    <text x="128" y="396" fill="#e6edf3" font-size="12" font-weight="700">POST /api/refresh</text>
+    <text x="108" y="416" fill="#6e7681" font-size="10">buton + 5dk otomatik</text>
   </g>
-  <path d="M280 325 H360" stroke="#3fb950" stroke-width="2" marker-end="url(#ag)"/>
-  <text x="290" y="318" fill="#3fb950" font-size="10">refresh</text>
-
-  <!-- Yahoo -->
+  <line x1="202" y1="428" x2="202" y2="456" stroke="#3fb950" stroke-width="2" marker-end="url(#g)"/>
   <g>
-    <rect x="640" y="270" width="180" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
-    <text x="656" y="296" fill="#e6edf3" font-size="12" font-weight="700">Yahoo Finance</text>
-    <text x="656" y="314" fill="#6e7681" font-size="10">fiyat + sembol arama</text>
+    <rect x="92" y="456" width="450" height="92" rx="8" fill="#0f2a1e" stroke="#3fb950"/>
+    <text x="108" y="480" fill="#e6edf3" font-size="13" font-weight="700">live_refresh()  ·  Python</text>
+    <text x="108" y="502" fill="#9fe1cb" font-size="11">portfolio.json oku → her varlığı türe göre değerle</text>
+    <text x="108" y="520" fill="#9fe1cb" font-size="11">hisse · nakit · emtia · kripto  →  FX ile baz para birimine</text>
+    <text x="108" y="538" fill="#6e7681" font-size="10">net-değer + dağılım hesapla</text>
   </g>
-  <path d="M580 300 H640" stroke="#3fb950" stroke-width="2" marker-end="url(#ag)"/>
-
-  <!-- Path B: Claude pipeline -->
   <g>
-    <rect x="360" y="440" width="220" height="180" rx="8" fill="#2a210d" stroke="#d29922"/>
-    <text x="376" y="468" fill="#e6edf3" font-size="14" font-weight="700">finops-full-pipeline</text>
-    <text x="376" y="486" fill="#6e7681" font-size="10">.claude/workflows/*.js</text>
-    <text x="376" y="510" fill="#fac775" font-size="10">1 intake · portfolio.json</text>
-    <text x="376" y="526" fill="#fac775" font-size="10">2 connector · data-retriever</text>
-    <text x="376" y="542" fill="#fac775" font-size="10">3 review · reviewer (AI)</text>
-    <text x="376" y="558" fill="#fac775" font-size="10">4 synthesis → latest.json</text>
-    <text x="376" y="582" fill="#6e7681" font-size="10">+ reviewer_findings (severity)</text>
-    <text x="376" y="600" fill="#6e7681" font-size="10">+ pipeline-status.json</text>
+    <rect x="92" y="572" width="280" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="108" y="596" fill="#e6edf3" font-size="12" font-weight="700">Yahoo Finance</text>
+    <text x="108" y="616" fill="#6e7681" font-size="10">fiyat + sembol arama</text>
   </g>
-  <path d="M160 400 V470 H360" stroke="#d29922" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#ag2)"/>
-  <text x="176" y="430" fill="#d29922" font-size="10">/api/run → sinyal</text>
+  <line x1="232" y1="548" x2="232" y2="572" stroke="#3fb950" stroke-width="2" marker-end="url(#g)"/>
+  <text x="244" y="566" fill="#6e7681" font-size="10">fiyat çek</text>
 
-  <!-- Claude watcher -->
+  <!-- ===== AI YOL (sağ, amber) ===== -->
+  <rect x="610" y="330" width="500" height="330" rx="12" fill="#1a1408" stroke="#3a2e12"/>
+  <text x="632" y="358" fill="#d29922" font-size="13" font-weight="700">AI YOL · tam analiz (Claude · token harcar)</text>
+
   <g>
-    <rect x="640" y="470" width="200" height="120" rx="8" fill="#2a210d" stroke="#d29922"/>
-    <text x="656" y="498" fill="#e6edf3" font-size="13" font-weight="700">Claude (açık session)</text>
-    <text x="656" y="516" fill="#6e7681" font-size="10">watcher / günlük cron</text>
-    <text x="656" y="540" fill="#fac775" font-size="10">sinyali görür → workflow</text>
-    <text x="656" y="556" fill="#fac775" font-size="10">çalıştırır (WebFetch+AI)</text>
-    <text x="656" y="576" fill="#6e7681" font-size="10">server claude'u ÇALIŞTIRMAZ</text>
+    <rect x="632" y="372" width="280" height="56" rx="8" fill="#2a210d" stroke="#d29922"/>
+    <circle cx="652" cy="392" r="8" fill="#d29922"/><text x="648" y="396" fill="#1a1408" font-size="10" font-weight="700">3</text>
+    <text x="668" y="396" fill="#e6edf3" font-size="12" font-weight="700">POST /api/run → sinyal dosyası</text>
+    <text x="648" y="416" fill="#6e7681" font-size="10">server Claude'u ÇALIŞTIRMAZ (RCE yok)</text>
   </g>
-  <path d="M580 530 H640" stroke="#d29922" stroke-width="2" marker-end="url(#ag2)"/>
-  <path d="M740 470 V440 H580" stroke="#d29922" stroke-width="2" fill="none" marker-end="url(#ag2)"/>
-  <text x="600" y="432" fill="#6e7681" font-size="10">workflow çağırır</text>
-
+  <line x1="772" y1="428" x2="772" y2="452" stroke="#d29922" stroke-width="2" marker-end="url(#a)"/>
+  <g>
+    <rect x="632" y="452" width="280" height="50" rx="8" fill="#2a210d" stroke="#d29922"/>
+    <circle cx="652" cy="472" r="8" fill="#d29922"/><text x="648" y="476" fill="#1a1408" font-size="10" font-weight="700">4</text>
+    <text x="668" y="476" fill="#e6edf3" font-size="12" font-weight="700">Claude watcher (açık session)</text>
+    <text x="648" y="494" fill="#6e7681" font-size="10">sinyali görür → workflow çalıştırır</text>
+  </g>
+  <line x1="772" y1="502" x2="772" y2="526" stroke="#d29922" stroke-width="2" marker-end="url(#a)"/>
+  <g>
+    <rect x="632" y="526" width="280" height="106" rx="8" fill="#2a210d" stroke="#d29922"/>
+    <text x="648" y="550" fill="#e6edf3" font-size="12" font-weight="700">finops-full-pipeline (4 faz)</text>
+    <text x="648" y="570" fill="#fac775" font-size="10">intake → connector → review → synthesis</text>
+    <text x="648" y="588" fill="#fac775" font-size="10">data-retriever + reviewer (subagent)</text>
+    <text x="648" y="606" fill="#6e7681" font-size="10">AI risk bulguları (severity'li)</text>
+    <text x="648" y="624" fill="#6e7681" font-size="10">+ pipeline-status.json</text>
+  </g>
   <!-- skills -->
   <g>
-    <rect x="900" y="440" width="270" height="180" rx="8" fill="#241a33" stroke="#8a63d2"/>
-    <text x="916" y="468" fill="#e6edf3" font-size="13" font-weight="700">.claude/skills (5)</text>
-    <text x="916" y="490" fill="#c9b8ef" font-size="10">finops-agent · net-değer</text>
-    <text x="916" y="506" fill="#c9b8ef" font-size="10">market-researcher · araştırma</text>
-    <text x="916" y="522" fill="#c9b8ef" font-size="10">valuation-reviewer · çarpan</text>
-    <text x="916" y="538" fill="#c9b8ef" font-size="10">model-builder · senaryo</text>
-    <text x="916" y="554" fill="#c9b8ef" font-size="10">earnings-reviewer · kazanç</text>
-    <text x="916" y="578" fill="#6e7681" font-size="10">subagent: data-retriever,</text>
-    <text x="916" y="594" fill="#6e7681" font-size="10">reviewer (ortak)</text>
+    <rect x="932" y="526" width="160" height="106" rx="8" fill="#241a33" stroke="#8a63d2"/>
+    <text x="948" y="548" fill="#c9b8ef" font-size="11" font-weight="700">.claude/skills</text>
+    <text x="948" y="568" fill="#8a7bc0" font-size="9">finops-agent</text>
+    <text x="948" y="582" fill="#8a7bc0" font-size="9">market-researcher</text>
+    <text x="948" y="596" fill="#8a7bc0" font-size="9">valuation-reviewer</text>
+    <text x="948" y="610" fill="#8a7bc0" font-size="9">model-builder</text>
+    <text x="948" y="624" fill="#8a7bc0" font-size="9">earnings-reviewer</text>
   </g>
-  <path d="M840 530 H900" stroke="#8a63d2" stroke-width="2" marker-end="url(#ag3)"/>
+  <line x1="912" y1="579" x2="932" y2="579" stroke="#8a63d2" stroke-width="2" marker-end="url(#p)"/>
 
-  <!-- output -->
+  <!-- ===== ADIM 5: ortak çıktı ===== -->
   <g>
-    <rect x="900" y="270" width="270" height="120" rx="8" fill="#161b22" stroke="#30363d"/>
-    <text x="916" y="298" fill="#e6edf3" font-size="13" font-weight="700">output/</text>
-    <text x="916" y="320" fill="#8b949e" font-size="10">latest.json · history.json</text>
-    <text x="916" y="336" fill="#8b949e" font-size="10">watchlist.json · *.md raporlar</text>
-    <text x="916" y="360" fill="#6e7681" font-size="10">gitignore'lu — sadece *.sample</text>
-    <text x="916" y="376" fill="#6e7681" font-size="10">paylaşılır (gizlilik)</text>
+    <rect x="390" y="694" width="400" height="64" rx="10" fill="#161b22" stroke="#388bfd" stroke-width="1.5"/>
+    <circle cx="412" cy="718" r="9" fill="#388bfd"/><text x="408" y="722" fill="#fff" font-size="11" font-weight="700">5</text>
+    <text x="430" y="722" fill="#e6edf3" font-size="14" font-weight="700">output/latest.json</text>
+    <text x="430" y="742" fill="#6e7681" font-size="10">paylaşılan çıktı · gerçek veri gitignore'lu (sadece *.sample paylaşılır)</text>
   </g>
-  <path d="M580 330 C700 330 800 330 900 330" stroke="#3fb950" stroke-width="2" fill="none" marker-end="url(#ag)"/>
-  <path d="M580 480 C720 420 800 400 900 360" stroke="#d29922" stroke-width="2" fill="none" marker-end="url(#ag2)"/>
-  <path d="M900 320 C600 250 400 250 280 300" stroke="#388bfd" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#agb)"/>
-  <text x="470" y="248" fill="#6e7681" font-size="10">UI okur → render</text>
+  <!-- two lanes feed output -->
+  <path d="M320 632 V726 H390" stroke="#3fb950" stroke-width="2.5" fill="none" marker-end="url(#g)"/>
+  <path d="M772 632 V726 H790" stroke="#d29922" stroke-width="2.5" fill="none" marker-end="url(#a)" transform="translate(0,0)"/>
+  <path d="M860 632 V726 H790" stroke="#d29922" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+
+  <!-- output back to UI (left margin, clean L route) -->
+  <path d="M390 726 H40 V135 H430" stroke="#388bfd" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#b)"/>
+  <text x="48" y="430" fill="#6e7681" font-size="11" transform="rotate(-90 48 430)">UI polling /api/latest → ekranı günceller</text>
 
   <defs>
-    <marker id="ag"  markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3fb950"/></marker>
-    <marker id="ag2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d29922"/></marker>
-    <marker id="ag3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a63d2"/></marker>
-    <marker id="agb" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#388bfd"/></marker>
+    <marker id="g" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3fb950"/></marker>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d29922"/></marker>
+    <marker id="b" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#388bfd"/></marker>
+    <marker id="p" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a63d2"/></marker>
   </defs>
 </svg>
