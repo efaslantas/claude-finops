@@ -1,162 +1,182 @@
-# EFA FinOps Terminal
+<div align="center">
 
-> Claude-native **finans agent template'i** — bir portföyün canlı net-değerini, risk analizini ve
-> senaryo projeksiyonlarını üreten; çıktıları Bloomberg-tarzı tek bir terminal ekranında gösteren sandbox.
->
-> _A Claude-native finance-agent template: live net-worth, risk findings and scenario projections,
-> rendered in a single Bloomberg-style terminal. UI/docs in Turkish._
+# 📊 EFA FinOps Terminal
 
-![status](https://img.shields.io/badge/status-sandbox-orange) ![license](https://img.shields.io/badge/license-MIT-blue) ![deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen) ![python](https://img.shields.io/badge/python-3.8%2B-blue)
+**Claude-native portfolio terminal — live net-worth, AI risk analysis, scenario & token tracking.**
+**Claude-native portföy terminali — canlı net-değer, AI risk analizi, senaryo & token takibi.**
+
+[English](#-english) · [Türkçe](#-türkçe)
+
+![status](https://img.shields.io/badge/status-active-brightgreen) ![license](https://img.shields.io/badge/license-MIT-blue) ![runtime deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen) ![python](https://img.shields.io/badge/python-3.8%2B-blue) ![built with](https://img.shields.io/badge/built%20with-Claude-8A63D2)
 
 ![EFA FinOps Terminal](docs/banner.svg)
 
-<sub>Üstteki temsilî banner. Gerçek ekran görüntüsü için `./start.sh` ile aç, terminali yakala ve `docs/screenshot.png` olarak kaydedip bu satırı onunla değiştir.</sub>
+</div>
 
 ---
 
-## Nedir?
+## 🇬🇧 English
 
-Anthropic'in finans-agent kompozisyonunu (**skill + connector + subagent**) Claude Code'un native
-yapısı üzerinde prototipleyen bir laboratuvar. Üç parça:
+A single-screen, Bloomberg-style **portfolio terminal** powered by **Claude agents**. Plug in your own
+holdings — stocks, cash, gold, crypto — and get a live net-worth, AI-generated risk findings,
+scenario projections and a clean activity feed. **Zero runtime dependencies** (Python stdlib only).
 
-| Kavram | Karşılığı | Konum |
+> ⚠️ Educational sandbox — **not investment advice**. Prices may be delayed/indicative.
+
+### ✨ Why you'll like it
+
+- **🔌 Plug-and-play portfolio** — search by name (*"Apple"*, *"Tüpraş"*, *"Bitcoin"*), we resolve the
+  Yahoo ticker for you. No need to know symbols.
+- **🧠 Real AI analysis** — a `reviewer` subagent flags concentration, FX and single-asset risks with
+  severity levels — not rule-based templates.
+- **💹 Any asset** — equities (NASDAQ/BIST/XETRA…), cash (TRY/USD/EUR), commodities (gold/silver),
+  crypto (BTC/ETH…). Everything normalized to your base currency, live.
+- **📈 One screen** — net-worth + daily P&L + trend, positions, allocation, scenarios, market watch,
+  AI findings, history & token usage — all in a clean terminal.
+- **🪙 Token-aware** — every Claude analysis run is counted; see total tokens spent in the top bar.
+- **🐳 Zero deps + Docker** — stdlib-only server, one `./start.sh` or `docker compose up`.
+- **🔒 Privacy-first** — your real holdings stay local (gitignored); only `*.sample` data is shared.
+
+### 🚀 Quick start
+
+```bash
+git clone https://github.com/efaslantas/claude-finops.git
+cd claude-finops
+./start.sh            # → http://localhost:8765
+```
+
+Then click **⚙ Edit Portfolio**, search your assets by name, set quantities, **Save** — prices load live.
+
+Docker:
+```bash
+docker compose up --build   # → http://localhost:8765
+```
+
+### 🧩 How it works — the Claude agent composition
+
+This is a reference implementation of Anthropic's **skill + connector + subagent** finance-agent pattern,
+running natively on Claude Code:
+
+| Concept | Here | Location |
 |---|---|---|
-| **Skill** (talimat + domain bilgisi) | Agent Skill (markdown) | `.claude/skills/<ad>/SKILL.md` |
-| **Connector** (veri erişimi) | Claude native web araçları (WebFetch/WebSearch) | `connectors/live-quotes/` |
-| **Subagent** (alt görev) | Claude Code subagent | `.claude/agents/<ad>.md` |
-
-Akış: **intake → connector'dan canlı veri → subagent'lara dağıt → `output/` artifact → terminal UI.**
-
-> ⚠️ **Bu bir sandbox / öğrenme projesidir. Yatırım tavsiyesi değildir. Gerçek para hareketi yoktur.**
-
----
-
-## Skill Suite (5 mod)
-
-Hepsi `data-retriever` (canlı fiyat) + `reviewer` (denetim) subagent'larını paylaşır:
-
-| Skill | Ne yapar |
-|---|---|
-| `finops-agent` | Portföy net-değeri + varlık kırılımı + FX senaryo |
-| `market-researcher` | Hisse/sektör canlı araştırma (haber + katalizör + risk) |
-| `valuation-reviewer` | Pahalı/ucuz çarpan analizi (P/E, peer kıyas) |
-| `model-builder` | Senaryo & projeksiyon (FX yolu, bear/base/bull, birikim) |
-| `earnings-reviewer` | Kazanç/bilanço özeti + beklenti kıyası |
-
----
-
-## Terminal Ekranı
-
-Tek sayfa, üstte **Hero KPI bandı** (net-değer + günlük P&L + trend + dağılım + veri kalitesi),
-altında **risk şeridi**, F-tuşlarıyla detay panellerine atlama:
-
-- **Hero bandı** · net-değer, günlük P&L, mini trend grafiği, varlık dağılımı, veri kalitesi
-- **Risk şeridi** · en kritik AI bulgusu (tıkla → F8)
-- **Trading Floor** · pixel-art agent animasyonu (Wall Street temalı, kompakt)
-- **F5 Senaryo** · bear/base/bull, canlı fiyattan türetilir
-- **F6 Dağılım** · varlık sınıfı + döviz maruziyeti
-- **F7 Piyasa** · portföy (★) + izleme listesi, canlı
-- **F8 Bulgular** · reviewer subagent AI bulguları (severity'li)
-- **F9 Raporlar** · `output/*.md` skill çıktıları (markdown render)
-- **F10 Geçmiş** · günlük net-değer trendi + AI token kullanımı
-
----
-
-## Kurulum
-
-### Seçenek A — Yerel (sıfır bağımlılık)
-
-Yalnızca Python 3.8+ gerekir (sadece stdlib kullanılır, `pip install` yok):
-
-```bash
-git clone <repo-url> && cd efa-finops-agentic
-./start.sh          # http://localhost:8765 açar
-```
-
-### Seçenek B — Docker
-
-```bash
-docker compose up --build
-# → http://localhost:8765
-```
-
-İlk açılışta gerçek veriniz yoksa `*.sample.json` örnek verisi gösterilir.
-
-### Veri girişi
-
-```bash
-cp data/portfolio.sample.json data/portfolio.json   # kendi miktarlarınızı girin
-```
-
-Canlı analizi Claude Code içinde çalıştırın:
-
-```
-/workflows finops-full-pipeline      # net-değer + bulgular → output/latest.json
-# veya tek tek: "NVDA araştır", "ASELS pahalı mı", "TL %20 zayıflarsa"
-```
-
-Terminal `output/latest.json`'ı otomatik okur; pipeline yeni veri yazınca panel güncellenir.
-
----
-
-## Mimarı
+| **Skill** (instructions + domain) | 5 Agent Skills | `.claude/skills/<name>/SKILL.md` |
+| **Connector** (data access) | Claude WebFetch / Yahoo Finance | `connectors/live-quotes/` |
+| **Subagent** (sub-task) | data-retriever + reviewer | `.claude/agents/<name>.md` |
 
 ```
 data/portfolio.json
       │  intake
       ▼
-data-retriever (WebFetch → Yahoo Finance)   ← connector
-      │  canlı fiyat, TRY normalize
+data-retriever (live prices)  →  reviewer (AI risk analysis)
+      │
       ▼
-reviewer (metodoloji + risk analizi)        ← subagent
-      │  bulgular (KRİTİK/ÖNEMLİ/ÖNERİ/BİLGİ)
-      ▼
-output/latest.json + output/*.md            ← artifact
-      │  /api/latest · /api/reports
-      ▼
-index.html (terminal UI)                    ← pipeline_server.py
+output/latest.json  →  terminal UI  (pipeline_server.py · /api/*)
 ```
 
-### Dosya yapısı
+**5 skills:** `finops-agent` (net-worth) · `market-researcher` · `valuation-reviewer` ·
+`model-builder` · `earnings-reviewer`.
+
+### 🖥️ The screen (F-keys)
+
+`F5` Scenario · `F6` Allocation · `F7` Market watch · `F8` Risk findings · `F9` Reports ·
+`F10` History & tokens · `F12` Mini CLI.
+
+### 📁 Structure
 
 ```
-index.html           → terminal UI (tek sayfa)
-assets/css/          → terminal.css
-assets/js/           → terminal.js
-pipeline_server.py   → statik sunucu + /api köprüsü (yalnızca stdlib)
-.claude/skills/      → 5 skill (finops-agent, market-researcher, ...)
-.claude/agents/      → data-retriever, reviewer
-.claude/workflows/   → finops-full-pipeline.js (orkestrasyon)
-data/                → portföy fixture'ları (*.sample.json paylaşılır)
-output/              → üretilen artifact'lar (gitignore'lu; *.sample paylaşılır)
-docs/                → mimari.excalidraw + ekran görüntüsü
-Dockerfile · docker-compose.yml · start.sh · .github/workflows/ci.yml
+index.html · assets/        → terminal UI (single page, no build)
+pipeline_server.py          → static server + /api bridge (stdlib only)
+.claude/skills · agents · workflows  → the AI agent composition
+data/*.sample.json          → example portfolio (yours stays gitignored)
+Dockerfile · docker-compose.yml · .github/workflows/ci.yml
 ```
+
+### 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Rule #1: **never commit real financial data** — `.gitignore`
+keeps `data/*.json` and `output/*` local; only `*.sample.json` is shared.
+
+### 📜 License
+
+MIT — see [LICENSE](LICENSE). **Not investment advice.** Do your own research.
 
 ---
 
-## ⚠️ Yayın Öncesi Gizlilik Kontrol Listesi
+## 🇹🇷 Türkçe
 
-Bu repo, kişisel finansal verinin **commit edilmemesi** için `.gitignore` ile korunur
-(`data/*.json` ve `output/*.json|*.md` hariç tutulur, sadece `*.sample.json` paylaşılır).
+**Claude agent'larıyla** çalışan, tek ekranlık Bloomberg-tarzı bir **portföy terminali**. Kendi
+varlıklarını gir — hisse, nakit, altın, kripto — anında canlı net-değer, AI risk bulguları, senaryo
+projeksiyonları ve temiz bir aktivite akışı al. **Sıfır çalışma-zamanı bağımlılığı** (sadece Python stdlib).
 
-Fork'lamadan / push'lamadan önce doğrulayın:
+> ⚠️ Eğitim amaçlı sandbox — **yatırım tavsiyesi değildir**. Fiyatlar gecikmeli/indikatif olabilir.
 
-- [ ] `git status` — `data/portfolio.json` ve `output/latest.json` **takip edilmiyor** olmalı
-- [ ] `index.html` ve `assets/js/terminal.js` içinde gerçek tutar/bakiye yok (örnek değerler var)
-- [ ] `output/*.md` raporlarında kişisel analiz yok (gitignore'lu)
-- [ ] Hiçbir secret / API anahtarı yok (bu proje anahtar kullanmaz)
+### ✨ Neden hoşuna gidecek
+
+- **🔌 Tak çalıştır portföy** — isimle ara (*"Apple"*, *"Tüpraş"*, *"Bitcoin"*), Yahoo ticker'ını biz
+  buluruz. Sembolü bilmene gerek yok.
+- **🧠 Gerçek AI analizi** — `reviewer` subagent'ı konsantrasyon, FX ve tek-varlık risklerini
+  önem seviyesiyle (KRİTİK/ÖNEMLİ/ÖNERİ) işaretler — kural-tabanlı şablon değil.
+- **💹 Her varlık türü** — hisse (NASDAQ/BIST/XETRA…), nakit (TRY/USD/EUR), emtia (altın/gümüş),
+  kripto (BTC/ETH…). Hepsi baz para birimine canlı çevrilir.
+- **📈 Tek ekran** — net-değer + günlük P&L + trend, pozisyonlar, dağılım, senaryolar, piyasa takibi,
+  AI bulguları, geçmiş & token kullanımı — hepsi temiz bir terminalde.
+- **🪙 Token farkında** — her Claude analiz çalıştırması sayılır; harcanan toplam token üst barda görünür.
+- **🐳 Sıfır bağımlılık + Docker** — stdlib-only sunucu, tek `./start.sh` ya da `docker compose up`.
+- **🔒 Gizlilik önce** — gerçek varlıkların lokal kalır (gitignore'lu); sadece `*.sample` veri paylaşılır.
+
+### 🚀 Hızlı başlangıç
+
+```bash
+git clone https://github.com/efaslantas/claude-finops.git
+cd claude-finops
+./start.sh            # → http://localhost:8765
+```
+
+Sonra **⚙ Portföy Düzenle**'ye tıkla, varlıklarını isimle ara, miktar gir, **Kaydet** — fiyatlar canlı yüklenir.
+
+Docker:
+```bash
+docker compose up --build   # → http://localhost:8765
+```
+
+### 🧩 Nasıl çalışır — Claude agent kompozisyonu
+
+Anthropic'in **skill + connector + subagent** finans-agent kalıbının Claude Code üzerinde native
+referans uygulamasıdır:
+
+| Kavram | Buradaki | Konum |
+|---|---|---|
+| **Skill** (talimat + domain) | 5 Agent Skill | `.claude/skills/<ad>/SKILL.md` |
+| **Connector** (veri erişimi) | Claude WebFetch / Yahoo Finance | `connectors/live-quotes/` |
+| **Subagent** (alt görev) | data-retriever + reviewer | `.claude/agents/<ad>.md` |
+
+```
+data/portfolio.json
+      │  intake
+      ▼
+data-retriever (canlı fiyat)  →  reviewer (AI risk analizi)
+      │
+      ▼
+output/latest.json  →  terminal UI  (pipeline_server.py · /api/*)
+```
+
+**5 skill:** `finops-agent` (net-değer) · `market-researcher` · `valuation-reviewer` ·
+`model-builder` · `earnings-reviewer`.
+
+### 🖥️ Ekran (F-tuşları)
+
+`F5` Senaryo · `F6` Dağılım · `F7` Piyasa takibi · `F8` Risk bulguları · `F9` Raporlar ·
+`F10` Geçmiş & token · `F12` Mini CLI.
+
+### 🤝 Katkı
+
+[CONTRIBUTING.md](CONTRIBUTING.md)'ye bak. Kural #1: **gerçek finansal veriyi asla commit etme** —
+`.gitignore` `data/*.json` ve `output/*`'ı lokal tutar; sadece `*.sample.json` paylaşılır.
+
+### 📜 Lisans
+
+MIT — [LICENSE](LICENSE). **Yatırım tavsiyesi değildir.** Kendi araştırmanı yap.
 
 ---
 
-## Katkı & Mimari
-
-- Katkı rehberi: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Mimari diyagramı: [docs/mimari.excalidraw](docs/mimari.excalidraw) ([excalidraw.com](https://excalidraw.com)'da aç)
-- CI: `python -m py_compile` + JSON doğrulama (`.github/workflows/ci.yml`)
-
-## Lisans
-
-MIT — bkz. [LICENSE](LICENSE).
-
-**Yatırım tavsiyesi değildir.** Fiyatlar gecikmeli/indikatif olabilir. Kendi araştırmanızı yapın.
+<div align="center"><sub>Built with <a href="https://claude.com/claude-code">Claude Code</a> · Banner is illustrative; capture a real screenshot to <code>docs/screenshot.png</code> and swap the image link.</sub></div>
