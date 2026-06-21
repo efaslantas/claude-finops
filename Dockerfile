@@ -1,9 +1,9 @@
-# EFA FinOps Terminal — dashboard server (stdlib Python, sıfır bağımlılık)
+# Claude FinOps Terminal — dashboard server (stdlib Python, sıfır bağımlılık)
 # NOT: Agent pipeline'ı (skill + subagent) Claude Code host tarafında çalışır;
 # bu container yalnızca terminali ve output/ verisini sunar.
 FROM python:3.12-slim
 
-LABEL org.opencontainers.image.title="EFA FinOps Terminal" \
+LABEL org.opencontainers.image.title="Claude FinOps Terminal" \
       org.opencontainers.image.description="Claude-native FinOps agent template — portföy net-değeri & analiz terminali" \
       org.opencontainers.image.licenses="MIT"
 
