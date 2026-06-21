@@ -693,7 +693,7 @@ function jumpTo(id){
 }
 // risk şeridi → bulgular paneline git + yükle
 (function(){var rb=document.getElementById('risk-ribbon');if(rb)rb.onclick=function(){jumpTo('p-findings');};})();
-var allPanelKeys={F2:'p-posn',F3:'p-floor',F4:'p-pipe',F5:'p-scen',F6:'p-alloc',F7:'p-dax',F8:'p-findings',F9:'p-reports',F10:'p-history',F12:'p-cli'};
+var allPanelKeys={F2:'p-posn',F3:'p-news',F4:'p-bench',F5:'p-scen',F6:'p-alloc',F7:'p-dax',F8:'p-findings',F9:'p-reports',F10:'p-history',F11:'p-rebalance',F12:'p-cli'};
 [].slice.call(document.querySelectorAll('.fkey')).forEach(function(k){
   k.onclick=function(){
     var tgt=k.getAttribute('data-tgt');
@@ -744,8 +744,7 @@ document.addEventListener('keydown',function(e){
   if(!out||!btn) return;
 
   function sentimentLabel(ts){
-    // Son haberlerin timestamp'lerine göre "yeni" → yüksek puan
-    var ago=Date.now()/1000-ts; // saniye önce
+    var ago=Date.now()/1000-ts;
     return ago<86400?'YENİ':ago<604800?'7G':'ESKİ';
   }
   function renderNews(d){
@@ -761,10 +760,10 @@ document.addEventListener('keydown',function(e){
       var bcolor=badge==='YENİ'?'var(--green)':badge==='7G'?'var(--amber)':'var(--text3)';
       html+='<div style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px">'
         +'<div style="font-size:8px;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:4px">'
-        +'<span>'+esc(a.publisher||'')+'</span>'
+        +'<span>'+esc2(a.publisher||'')+'</span>'
         +'<span style="color:'+bcolor+'">'+badge+' · '+date+'</span></div>'
-        +'<div style="font-size:10px;line-height:1.4;color:var(--text)">'+esc(a.title||'')+'</div>'
-        +(a.link?'<div style="margin-top:4px"><a href="'+esc(a.link)+'" target="_blank" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
+        +'<div style="font-size:10px;line-height:1.4;color:var(--text)">'+esc2(a.title||'')+'</div>'
+        +(a.link?'<div style="margin-top:4px"><a href="'+esc2(a.link)+'" target="_blank" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
         +'</div>';
     });
     out.innerHTML=html;
@@ -865,11 +864,11 @@ document.addEventListener('keydown',function(e){
       rbTradeList.innerHTML=d.trades.map(function(t){
         var c=t.action==='SAT'?'var(--red)':'var(--green)';
         return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px">'
-          +'<span style="color:'+c+';font-weight:700;min-width:28px">'+t.action+'</span>'
-          +'<span style="color:var(--text2)">'+esc(t.class)+'</span>'
+          +'<span style="color:'+c+';font-weight:700;min-width:28px">'+esc2(t.action)+'</span>'
+          +'<span style="color:var(--text2)">'+esc2(t.class||'')+'</span>'
           +'<span style="color:'+c+'">%'+Math.abs(t.delta_pct).toFixed(1)+'</span>'
           +'<span style="margin-left:auto;color:var(--text3)">~₺'+Math.round(t.amount_try).toLocaleString('tr-TR')+'</span>'
-          +'<span style="color:var(--text3);font-size:8px;max-width:160px">'+esc(t.reason)+'</span>'
+          +'<span style="color:var(--text3);font-size:8px;max-width:160px">'+esc2(t.reason||'')+'</span>'
           +'</div>';
       }).join('');
     } else if(rbTrades) rbTrades.style.display='none';
@@ -900,7 +899,7 @@ document.addEventListener('keydown',function(e){
     alarmList.innerHTML=_alarms.map(function(a,i){
       var arrow=a.dir==='above'?'▲':'▼';
       return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px">'
-        +'<span style="color:var(--accent);font-weight:700;min-width:60px">'+esc(a.ticker)+'</span>'
+        +'<span style="color:var(--accent);font-weight:700;min-width:60px">'+esc2(a.ticker||'')+'</span>'
         +'<span style="color:var(--amber)">'+arrow+' '+a.price+'</span>'
         +'<span style="margin-left:auto;cursor:pointer;color:var(--red)" data-del="'+i+'">×</span></div>';
     }).join('');
