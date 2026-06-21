@@ -1,0 +1,10 @@
+{
+  "_comment": "Rebalans hedef dağılımı — data/targets.json olarak kopyala ve düzenle.",
+  "targets": {
+    "Emtia": 40.0,
+    "Nakit": 20.0,
+    "Hisse": 40.0
+  },
+  "tolerance_pct": 5,
+  "_note": "tolerance_pct: bu kadar sapma olursa işlem önerilir. Kripto, Fon gibi sınıflar da eklenebilir."
+}
