@@ -13,7 +13,7 @@ tax harvesting, news sentiment, benchmarking and rebalance suggestions.**
 ![runtime deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
 ![python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![built with](https://img.shields.io/badge/built%20with-Claude-8A63D2)
-![skills](https://img.shields.io/badge/skills-14-purple)
+![skills](https://img.shields.io/badge/skills-22-purple)
 
 </div>
 
@@ -59,15 +59,17 @@ parallel agents — not a fixed rule engine.
 | News sentiment (per ticker) | `news-sentiment` subagent + F3 panel | ✅ |
 | Index benchmarking (alpha) | `benchmark-tracker` subagent + F4 panel | ✅ |
 | Rebalance advisor | `rebalancer` subagent + F11 panel | ✅ |
-| **PDF / annual report parser** | **`pdf-analyzer`** | ✅ new |
-| **Macro stress test** | **`macro-stress`** | ✅ new |
-| **Tax-loss harvesting** | **`tax-harvester`** | ✅ new |
-| Monte Carlo simulation | `model-builder` (future: code tool) | 🔜 roadmap |
-| Options pricing (Black-Scholes) | `options-pricer` | 🔜 roadmap |
-| M&A due diligence | `ma-screener` | 🔜 roadmap |
-| Chart vision (screenshot → pattern) | `chart-reader` | 🔜 roadmap |
-| Extended thinking DCF | `model-builder` + thinking mode | 🔜 roadmap |
-| Dividend reinvestment optimizer | `drip-optimizer` | 🔜 roadmap |
+| PDF / annual report parser | `pdf-analyzer` | ✅ |
+| Macro stress test | `macro-stress` | ✅ |
+| Tax-loss harvesting | `tax-harvester` | ✅ |
+| Monte Carlo simulation | `monte-carlo` | ✅ |
+| Options pricing (Black-Scholes + Greeks) | `options-pricer` | ✅ |
+| M&A due diligence | `ma-screener` | ✅ |
+| Chart vision (screenshot → pattern) | `chart-reader` | ✅ |
+| Extended thinking DCF | `dcf-thinking` | ✅ |
+| Dividend reinvestment optimizer | `drip-optimizer` | ✅ |
+| Bond yield / duration / credit risk | `credit-analyzer` | ✅ |
+| Macro calendar + portfolio pre-brief | `macro-calendar` | ✅ |
 
 ---
 
@@ -135,12 +137,12 @@ Reference implementation of Anthropic's **skill + connector + subagent** finance
 
 | Concept | Here | Location |
 |---|---|---|
-| **Skill** | 14 Agent Skills | `.claude/skills/<name>/SKILL.md` |
+| **Skill** | 22 Agent Skills | `.claude/skills/<name>/SKILL.md` |
 | **Connector** | Claude WebFetch · Yahoo Finance APIs | `connectors/live-quotes/` |
 | **Subagent** | 5 specialised agents | `.claude/agents/<name>.md` |
 | **Workflow** | `finops-full-pipeline` (6 phases) | `.claude/workflows/` |
 
-#### Skills (14)
+#### Skills (22)
 
 | Skill | Claude capability used | What it does |
 |---|---|---|
@@ -155,9 +157,17 @@ Reference implementation of Anthropic's **skill + connector + subagent** finance
 | `gl-reconciler` | Long context, structured output | Bank statement → reconciliation report |
 | `month-end-closer` | Long context, reasoning | Monthly P&L + FX impact from history |
 | `kyc-screener` | Web search, reasoning | 5-dimension KYC screening |
-| **`pdf-analyzer`** | **Vision, 200k context** | **Annual reports, 10-K, PDF statements** |
-| **`macro-stress`** | **Extended thinking, reasoning** | **Fed/inflation/FX shock → portfolio impact** |
-| **`tax-harvester`** | **Reasoning, structured output** | **Tax-loss candidates + savings estimate** |
+| `pdf-analyzer` | Vision, 200k context | Annual reports, 10-K, PDF statements |
+| `macro-stress` | Extended thinking, reasoning | Fed/inflation/FX shock → portfolio impact |
+| `tax-harvester` | Reasoning, structured output | Tax-loss candidates + savings estimate |
+| `options-pricer` | Reasoning, structured output | Black-Scholes + binomial + Greeks (Δ Γ Θ Vega Rho) |
+| `monte-carlo` | Reasoning, structured output | GBM simulation, P10/P50/P90 percentiles |
+| `ma-screener` | Web search, reasoning | 5-workstream M&A due diligence + scoring |
+| `chart-reader` | **Vision** | Screenshot → trend, patterns, support/resistance |
+| `dcf-thinking` | **Extended thinking** | Step-by-step DCF valuation, auditable reasoning |
+| `drip-optimizer` | Reasoning, structured output | Dividend reinvestment compound growth projections |
+| `credit-analyzer` | Reasoning, structured output | Bond YTM, duration, convexity, credit spread |
+| `macro-calendar` | Web search, reasoning | Upcoming events → per-holding impact scenarios |
 
 #### Subagents (5)
 
@@ -205,7 +215,7 @@ assets/css/terminal.css  → dark terminal theme
 assets/js/terminal.js    → all UI logic (vanilla JS, no framework)
 pipeline_server.py       → static server + /api bridge (stdlib only)
 .claude/
-  skills/                → 14 skill SKILL.md files
+  skills/                → 22 skill SKILL.md files
   agents/                → 5 subagent .md files
   workflows/             → finops-full-pipeline.js
 connectors/live-quotes/  → Yahoo Finance connector notes
@@ -255,20 +265,109 @@ Dockerfile · docker-compose.yml · start.sh · .github/workflows/ci.yml
 
 ---
 
-### 🔜 Roadmap
+### 📖 How to use
 
-Capabilities Claude has that aren't yet wired into skills:
+#### 1. Running the live pipeline (AI analysis)
 
-| | Skill | What it would do |
-|---|---|---|
-| 📈 | `options-pricer` | Black-Scholes / binomial pricing, Greeks (Δ Γ Θ Vega) for options positions |
-| 🎲 | `monte-carlo` | 1 000-path simulation for retirement/accumulation planning (code tool) |
-| 🔬 | `ma-screener` | Full M&A due diligence checklist — financial, legal, operational, synergies |
-| 📸 | `chart-reader` | Screenshot → candlestick pattern, trend, support/resistance (vision) |
-| 🤔 | `dcf-thinking` | Extended thinking mode DCF — auditable step-by-step valuation reasoning |
-| 💰 | `drip-optimizer` | Dividend reinvestment optimizer — compound schedule, tax efficiency |
-| 🏦 | `credit-analyzer` | Bond yield, duration, credit risk, covenant analysis |
-| 🌐 | `macro-calendar` | Upcoming macro events → portfolio impact pre-brief |
+The fastest path is the **Quick Refresh** button in the UI — this runs Python-side
+price fetching with no AI. For the full 6-phase AI analysis, use Claude Code:
+
+```bash
+# In a Claude Code session (claude --dangerously-skip-permissions or IDE)
+Workflow({name: "finops-full-pipeline"})
+```
+
+This runs all 6 phases (intake → quotes → review → intel → rebalance → synthesis)
+and writes `output/latest.json`. The terminal auto-reloads.
+
+Alternatively, press the **Run AI Pipeline** trigger in the UI — it writes a signal
+file and your open Claude Code session picks it up automatically.
+
+#### 2. Invoking skills
+
+Each skill is a Markdown instruction file. Claude Code reads it and executes the analysis.
+Open a Claude Code session in the project directory, then use any trigger phrase:
+
+```
+# Portfolio & risk
+"Portföyümü analiz et ve risk bul"
+"Net worth hesapla"
+
+# Deep research
+"NVDA için yatırım pitchi hazırla"
+"Bu şirketin kazançlarını analiz et: ASELS"
+"Valuation: TUPRS — P/E, EV/EBITDA, peer comparison"
+
+# Quantitative
+"NVDA DCF değerlemesi yap"            → dcf-thinking (extended thinking)
+"Monte Carlo sim: 10 yıl, $50k hedef" → monte-carlo
+"NVDA call opsiyonu fiyatla: K=150, T=90gün, σ=0.45" → options-pricer
+"Temettü yeniden yatırım analizi: TUPRS 10 yıl" → drip-optimizer
+
+# Fixed income
+"Turkey 2028 Eurobond analizi — YTM ve duration" → credit-analyzer
+"Bu hafta hangi makro olaylar var?" → macro-calendar
+
+# Vision / documents
+"Bu grafiği analiz et" + [chart screenshot] → chart-reader
+"Bu PDF'i oku: annual-report-2024.pdf" → pdf-analyzer
+
+# Macro & tax
+"FED 200bps artırırsa portföye etkisi ne?" → macro-stress
+"Vergi hasadı fırsatları var mı?" → tax-harvester
+
+# Compliance & corporate
+"[Şirket] için KYC taraması yap" → kyc-screener
+"[Şirket] M&A due diligence" → ma-screener
+```
+
+#### 3. Adding your portfolio
+
+1. Copy `data/portfolio.sample.json` → `data/portfolio.json`
+2. Edit with your holdings (or use **⚙ Edit Portfolio** in the UI to search by name)
+3. For tax harvesting: add `cost_basis_per_unit` and `purchase_date` to each equity
+4. For rebalancing: copy `data/targets.sample.json` → `data/targets.json`, set target %
+
+#### 4. Reading output artifacts
+
+All skill outputs land in `output/`:
+
+| File pattern | Skill |
+|---|---|
+| `output/latest.json` | Pipeline — loaded by the terminal UI |
+| `output/pdf-<company>-<date>.md` | pdf-analyzer |
+| `output/stress-<scenario>-<date>.md` | macro-stress |
+| `output/tax-harvest-<year>.md` | tax-harvester |
+| `output/dcf-<ticker>-<date>.md` | dcf-thinking |
+| `output/montecarlo-<date>.md` | monte-carlo |
+| `output/options-<ticker>-<date>.md` | options-pricer |
+| `output/drip-<date>.md` | drip-optimizer |
+| `output/credit-<issuer>-<date>.md` | credit-analyzer |
+| `output/macro-calendar-<date>.md` | macro-calendar |
+| `output/ma-<company>-<date>.md` | ma-screener |
+
+View them live in the terminal: press **F9** → Reports panel renders any `output/*.md` file.
+
+#### 5. Adding a new skill
+
+Each skill is one file:
+
+```bash
+mkdir .claude/skills/my-skill
+cat > .claude/skills/my-skill/SKILL.md << 'EOF'
+---
+name: my-skill
+description: One-line description of what this skill does.
+---
+# My Skill
+## Trigger phrases
+- "Run my skill for [ticker]"
+## Phases
+### Phase 1 — ...
+EOF
+```
+
+That's it. Claude Code picks it up immediately — no registration, no config.
 
 PRs welcome — each skill is a single `.claude/skills/<name>/SKILL.md` file.
 
@@ -314,11 +413,13 @@ paralel subagent'lar — hepsi doğrudan kullanılır.
 | **Tool use** | Yahoo Finance connector — middleware yok, API anahtarı yok |
 | **Çok dilli** | Türkçe ve İngilizce finansal analiz, tam bağlamla |
 
-### 14 Skill
+### 22 Skill
 
 `finops-agent` · `market-researcher` · `valuation-reviewer` · `model-builder` · `earnings-reviewer` ·
 `pitch-builder` · `meeting-preparer` · `statement-auditor` · `gl-reconciler` · `month-end-closer` ·
-`kyc-screener` · **`pdf-analyzer`** · **`macro-stress`** · **`tax-harvester`**
+`kyc-screener` · `pdf-analyzer` · `macro-stress` · `tax-harvester` ·
+`options-pricer` · `monte-carlo` · `ma-screener` · `chart-reader` ·
+`dcf-thinking` · `drip-optimizer` · `credit-analyzer` · `macro-calendar`
 
 ### Hızlı başlangıç
 
