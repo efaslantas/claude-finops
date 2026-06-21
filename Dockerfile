@@ -17,5 +17,10 @@ COPY output ./output
 
 EXPOSE 8765
 
+# Root olarak çalıştırma — ayrı kullanıcı oluştur
+RUN useradd --no-create-home --shell /bin/false finops && \
+    chown -R finops:finops /app
+USER finops
+
 # Server cwd'deki dosyaları + /api/* uçlarını sunar
 CMD ["python3", "pipeline_server.py"]

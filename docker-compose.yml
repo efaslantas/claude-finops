@@ -4,7 +4,9 @@ services:
     image: claude-finops-terminal
     container_name: finops-terminal
     ports:
-      - "8765:8765"
+      - "127.0.0.1:8765:8765"   # sadece localhost — LAN'a açma
+    environment:
+      - FINOPS_BIND=0.0.0.0     # container içinde her arayüzü dinle (dış erişim port mapping ile kısıtlı)
     # Gerçek verinizi göstermek için lokal data/ ve output/ klasörlerini bağlayın.
     # (Bağlamazsanız container içindeki .sample verisi gösterilir.)
     volumes:

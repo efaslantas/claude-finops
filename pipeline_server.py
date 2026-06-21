@@ -15,19 +15,37 @@ Uçlar:
 Güvenlik: varsayılan bind 127.0.0.1 (FINOPS_BIND ile değişir). Server hiçbir zaman
 claude/alt süreç çalıştırmaz; AI işini açık Claude Code session'ı (watcher) yapar.
 """
-import json, threading, os, urllib.request
+import json, re, logging, threading, os, time, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from datetime import datetime, timezone
 from urllib.parse import urlparse, parse_qs, quote
 
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+
 STATUS = {"state": "idle", "message": "Hazır", "progress": 0}
 LOCK = threading.Lock()
+
+TICKER_RE = re.compile(r'^[A-Z0-9.\-=^]{1,20}$', re.IGNORECASE)
+MAX_BODY = 1 * 1024 * 1024  # 1 MB
+REFRESH_COOLDOWN = 30        # saniye — Yahoo rate limit koruması
+ALLOWED_STATUS_KEYS = {"state", "message", "progress"}
+VALID_HOLDING_TYPES = {"equity", "cash", "commodity", "crypto", "fund"}
+_last_refresh = 0
+
+
+def safe_ticker(tk):
+    """Ticker'ı doğrula — sadece geçerli Yahoo Finance karakter kümesine izin ver."""
+    if not tk or not TICKER_RE.match(str(tk)):
+        return None
+    return str(tk)
 
 GRAM_PER_OZ = 31.1035
 
 
 def yf_quote(ticker):
     """Yahoo Finance v8 chart API'den fiyat + önceki kapanış. (price, prev_close) ya da (None, None)."""
+    if not safe_ticker(ticker):
+        return None, None
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=2d"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
@@ -206,7 +224,8 @@ def fetch_news(ticker, count=6):
         return {"ticker": ticker, "count": len(items), "articles": items,
                 "as_of": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
-        return {"ticker": ticker, "count": 0, "articles": [], "error": str(e)}
+        logging.warning("fetch_news %s: %s", ticker, e)
+        return {"ticker": ticker, "count": 0, "articles": [], "error": "haberler alınamadı"}
 
 
 def fetch_benchmark(days=30):
@@ -343,7 +362,7 @@ class Handler(SimpleHTTPRequestHandler):
                 with open("output/pipeline-status.json", encoding="utf-8") as f:
                     d = json.load(f)
                 with LOCK:
-                    STATUS.update(d)
+                    STATUS.update({k: v for k, v in d.items() if k in ALLOWED_STATUS_KEYS})
             except Exception:
                 pass
             with LOCK:
@@ -392,14 +411,19 @@ class Handler(SimpleHTTPRequestHandler):
                 with open(pf, encoding="utf-8") as f:
                     self._json(json.load(f))
             except Exception as e:
-                self._json({"error": str(e)}, 404)
+                logging.warning("portfolio load: %s", e)
+                self._json({"error": "portföy yüklenemedi"}, 404)
         elif self.path.startswith("/api/history"):
             self._json(_load_history())
         elif self.path.startswith("/api/news"):
-            ticker = parse_qs(urlparse(self.path).query).get("ticker", ["NVDA"])[0]
+            raw_ticker = parse_qs(urlparse(self.path).query).get("ticker", ["NVDA"])[0]
+            ticker = safe_ticker(raw_ticker) or "NVDA"
             self._json(fetch_news(ticker))
         elif self.path.startswith("/api/benchmark"):
-            days = int(parse_qs(urlparse(self.path).query).get("days", ["30"])[0])
+            try:
+                days = min(max(int(parse_qs(urlparse(self.path).query).get("days", ["30"])[0]), 1), 365)
+            except (ValueError, TypeError):
+                days = 30
             self._json(fetch_benchmark(days))
         elif self.path.startswith("/api/dividends"):
             self._json(fetch_dividends())
@@ -435,17 +459,40 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception: pass
             self._json({"reports": reports})
         else:
-            super().do_GET()
+            clean = urlparse(self.path).path
+            if (clean in ("/", "/index.html")
+                    or clean.startswith("/assets/")
+                    or clean.startswith("/output/")):
+                super().do_GET()
+            else:
+                self.send_response(403)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Forbidden")
 
     def do_POST(self):
         if self.path.startswith("/api/portfolio"):
             # UI formundan gelen portföyü data/portfolio.json'a yaz, sonra canlı yenile
             try:
                 ln = int(self.headers.get("Content-Length", 0))
+                if ln > MAX_BODY:
+                    return self._json({"error": "İstek çok büyük"}, 413)
                 body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
                 holdings = body.get("holdings", [])
                 if not isinstance(holdings, list):
                     return self._json({"error": "holdings dizi olmalı"}, 400)
+                for h in holdings:
+                    if not isinstance(h, dict):
+                        return self._json({"error": "Geçersiz varlık formatı"}, 400)
+                    if h.get("type", "equity") not in VALID_HOLDING_TYPES:
+                        return self._json({"error": f"Geçersiz tip: {h.get('type')}"}, 400)
+                    hticker = h.get("ticker")
+                    if hticker and not safe_ticker(hticker):
+                        return self._json({"error": f"Geçersiz ticker formatı"}, 400)
+                    for qf in ("quantity", "amount"):
+                        val = h.get(qf)
+                        if val is not None and not isinstance(val, (int, float)):
+                            return self._json({"error": f"Geçersiz {qf} değeri"}, 400)
                 doc = {"owner": body.get("owner", "user"),
                        "base_currency": (body.get("base_currency") or "TRY").upper(),
                        "note": "UI ⚙ Portföy Düzenle ile kaydedildi.",
@@ -456,13 +503,19 @@ class Handler(SimpleHTTPRequestHandler):
                 res = live_refresh()  # kaydeder kaydetmez canlı değerle
                 self._json({"status": "saved", "holdings": len(holdings), **res})
             except Exception as e:
-                self._json({"error": str(e)}, 500)
+                logging.warning("portfolio save: %s", e)
+                self._json({"error": "Portföy kaydedilemedi"}, 500)
         elif self.path.startswith("/api/refresh"):
             # Canlı fiyat + net-değer yenile (LLM YOK, sadece HTTP) — UI butonu bunu çağırır
+            global _last_refresh
+            now = time.time()
+            if now - _last_refresh < REFRESH_COOLDOWN:
+                return self._json({"error": f"Çok sık — lütfen {REFRESH_COOLDOWN}s bekleyin"}, 429)
             with LOCK:
                 if STATUS.get("state") == "refreshing":
                     return self._json({"error": "Yenileme zaten sürüyor"})
                 STATUS.update({"state": "refreshing", "message": "Canlı fiyatlar çekiliyor...", "progress": 30})
+            _last_refresh = now
             try:
                 res = live_refresh()
                 with LOCK:
@@ -470,9 +523,10 @@ class Handler(SimpleHTTPRequestHandler):
                                    "message": f"✓ Canlı yenilendi — ₺{res['net_worth_try']:,.0f} ({res['fetched']}/{res['total']})"})
                 self._json({"status": "ok", **res})
             except Exception as e:
+                logging.warning("live_refresh: %s", e)
                 with LOCK:
-                    STATUS.update({"state": "error", "message": f"Yenileme hatası: {e}", "progress": 0})
-                self._json({"error": str(e)}, 500)
+                    STATUS.update({"state": "error", "message": "Yenileme hatası", "progress": 0})
+                self._json({"error": "Fiyat yenileme başarısız"}, 500)
         elif self.path.startswith("/api/record-run"):
             # bir tam AI pipeline çalıştırmasını + token'ı kaydet (?tokens=N)
             tokens = 0
@@ -485,6 +539,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({"status": "recorded", **r})
         elif self.path.startswith("/api/alerts"):
             ln = int(self.headers.get("Content-Length", 0))
+            if ln > MAX_BODY:
+                return self._json({"error": "İstek çok büyük"}, 413)
             body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
             save_alerts(body)
             self._json({"status": "saved"})
@@ -517,8 +573,31 @@ class Handler(SimpleHTTPRequestHandler):
         self._cors(); self.end_headers()
         self.wfile.write(body)
 
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src https://fonts.gstatic.com; "
+            "connect-src 'self'; "
+            "img-src 'self' data:; "
+            "frame-ancestors 'none'"
+        )
+        super().end_headers()
+
     def _cors(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "")
+        allowed_origins = {
+            "http://localhost:8765", "http://127.0.0.1:8765",
+            "http://localhost:8766", "http://127.0.0.1:8766",
+        }
+        if origin in allowed_origins:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
 
     def log_message(self, fmt, *args):
