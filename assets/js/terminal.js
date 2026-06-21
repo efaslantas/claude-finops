@@ -137,14 +137,7 @@ function updateDashboard(data){
     var _tl=(data.holdings_with_prices||[]).reduce(function(s,h){return s+(h.id==='TL_CASH'?(h.value_try||0):0);},0);
     if(_alt)FIXED=_alt+_tl;}catch(e){}
   try{var nw=data.net_worth_try||0;
-    var mt=document.getElementById('m-total');if(mt)mt.textContent='₺'+fmt(nw);
-    var ms=document.getElementById('m-total-sub');if(ms)ms.textContent='$'+fmt(data.net_worth_usd||0);
     var chg=(nw-BASE)/BASE*100;
-    var mc=document.getElementById('m-change');if(mc){mc.textContent=(chg>=0?'▲':'▼')+Math.abs(chg).toFixed(1)+'%';mc.style.color=chg>=0?'#33ff66':'#ff4d4d';}
-    var mc2=document.getElementById('m-change-sub');if(mc2)mc2.textContent=(chg>=0?'+':'')+fmt(nw-BASE);
-    // progress bars
-    var nwBar=document.getElementById('m-nw-bar');if(nwBar){var pct=Math.min(100,Math.max(5,nw/700000*100));nwBar.style.width=pct+'%';nwBar.style.background=nw>=BASE?'#33ff66':'#ff4d4d';}
-    var chgBar=document.getElementById('m-chg-bar');if(chgBar){var cp=Math.min(100,Math.max(0,50+chg*5));chgBar.style.width=cp+'%';chgBar.style.background=chg>=0?'#33ff66':'#ff4d4d';}
     var mnv=document.getElementById('ms-net-val');if(mnv)mnv.textContent='₺'+fmt(nw);
     // HERO bandı
     var hn=document.getElementById('hero-net');if(hn)hn.textContent='₺'+fmt(nw);
@@ -180,9 +173,6 @@ function updateDashboard(data){
   }catch(e){}
   try{var q=data.quality_report||{};
     var fetched=q.successfully_fetched||0,total=q.total_holdings||0;
-    var ft=document.getElementById('fetch-text');if(ft)ft.textContent=fetched+'/'+total;
-    var fs=document.getElementById('fetch-status');if(fs)fs.style.background=(fetched===total)?'#33ff66':'#ff9500';
-    var qbar=document.getElementById('m-qual-bar');if(qbar){qbar.style.width=(total?fetched/total*100:0)+'%';qbar.style.background=(fetched===total)?'#33ff66':'#ff9500';}
     var lu=document.getElementById('last-update');if(lu){try{var ts=data.timestamp?new Date(data.timestamp):new Date();lu.textContent=('0'+ts.getHours()).slice(-2)+':'+('0'+ts.getMinutes()).slice(-2);}catch(e2){lu.textContent=new Date().toTimeString().slice(0,5);}}
   }catch(e){}
   try{
@@ -311,17 +301,7 @@ function updateDashboard(data){
     // F7 PİYASA TAKİP: portföy holdings (★) + izleme listesi, canlı
     if(typeof renderMarketWatch==='function')renderMarketWatch(data);
 
-    // RIGHT PANEL: full varlik analizi (9 holdings)
-    var usdCash=usdH,eurCash=eurH;
     function rp(id,v){var el=document.getElementById(id);if(el&&v!==undefined)el.textContent=v;}
-    if(xau){rp('rp-altin-price',num(xau.price_try));rp('rp-altin-val','₺'+fmt(xau.value_try));rp('rp-altin-pct',(xau.value_try/nwv*100).toFixed(1)+'%');}
-    if(tlH){rp('rp-tl-val','₺'+fmt(tlH.value_try));rp('rp-tl-pct',(tlH.value_try/nwv*100).toFixed(1)+'%');}
-    if(fx.usdtry){rp('rp-usd-price',num(fx.usdtry));if(usdCash){rp('rp-usd-val','₺'+fmt(usdCash.value_try));rp('rp-usd-pct',(usdCash.value_try/nwv*100).toFixed(1)+'%');}}
-    if(tuprs){rp('rp-tuprs-price',num(tuprs.price));rp('rp-tuprs-val','₺'+fmt(tuprs.value_try));rp('rp-tuprs-pct',(tuprs.value_try/nwv*100).toFixed(1)+'%');}
-    if(asels){rp('rp-asels-price',num(asels.price));rp('rp-asels-val','₺'+fmt(asels.value_try));rp('rp-asels-pct',(asels.value_try/nwv*100).toFixed(1)+'%');}
-    if(nvdaH){rp('rp-nvda-price','$'+num(nvdaH.price));rp('rp-nvda-val','₺'+fmt(nvdaH.value_try));rp('rp-nvda-pct',(nvdaH.value_try/nwv*100).toFixed(1)+'%');}
-    if(googlH){rp('rp-googl-price','$'+num(googlH.price));rp('rp-googl-val','₺'+fmt(googlH.value_try));rp('rp-googl-pct',(googlH.value_try/nwv*100).toFixed(1)+'%');}
-    if(mbgH){rp('rp-mbg-price','€'+num(mbgH.price));rp('rp-mbg-val','₺'+fmt(mbgH.value_try));rp('rp-mbg-pct',(mbgH.value_try/nwv*100).toFixed(1)+'%');}
 
     // F5 SENARYO: tablo + projeksiyon, hepsi canlı fiyat × senaryo çarpanı (tek kaynak)
     try{
@@ -772,7 +752,7 @@ document.addEventListener('keydown',function(e){
 
   function load(){
     var ticker=(inp&&inp.value.trim())||'NVDA';
-    out.innerHTML='<div class="alert info" style="font-size:9px;grid-column:1/-1">Haberler yükleniyor: '+esc(ticker)+'…</div>';
+    out.innerHTML='<div class="alert info" style="font-size:9px;grid-column:1/-1">Haberler yükleniyor: '+esc2(ticker||'')+'…</div>';
     fetch('/api/news?ticker='+encodeURIComponent(ticker))
       .then(function(r){return r.json();}).then(renderNews)
       .catch(function(){out.innerHTML='<div class="alert" style="font-size:9px;grid-column:1/-1">API erişim hatası — server çalışıyor mu?</div>';});
@@ -852,7 +832,7 @@ document.addEventListener('keydown',function(e){
       var dvColor=inTol?'var(--green)':dv>0?'var(--amber)':'var(--accent)';
       var badge=inTol?'<span style="color:var(--green)">✓</span>'
         :(dv>0?'<span style="color:var(--amber)">SAT</span>':'<span style="color:var(--accent)">AL</span>');
-      html+='<tr><td>'+esc(cls)+'</td>'
+      html+='<tr><td>'+esc2(cls)+'</td>'
         +'<td style="text-align:right">'+c.toFixed(1)+'%</td>'
         +'<td style="text-align:right">'+t.toFixed(1)+'%</td>'
         +'<td style="text-align:right;color:'+dvColor+'">'+(dv>=0?'+':'')+dv.toFixed(1)+'%</td>'
