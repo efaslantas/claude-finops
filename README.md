@@ -1,20 +1,26 @@
 # Claude FinOps Terminal — Personal Instance
 
-> Claude-native **finans agent terminal'i** — portföyün canlı net-değeri, risk analizi,
-> senaryo projeksiyonları, haber sentiment, endeks karşılaştırması ve yeniden dengeleme.
+> Claude-native **finans agent terminali** — portföyün canlı net-değeri, AI risk analizi,
+> makro stres testi, PDF rapor okuma, vergi hasadı, haber sentiment, endeks karşılaştırması.
 > Tek Bloomberg-tarzı ekranda.
 >
-> _Personal/hardcoded branch. Public generic version: [efaslantas/claude-finops](https://github.com/efaslantas/claude-finops)_
+> _Personal/hardcoded branch. Public open-source version: [efaslantas/claude-finops](https://github.com/efaslantas/claude-finops)_
 
-![status](https://img.shields.io/badge/status-personal-orange) ![license](https://img.shields.io/badge/license-MIT-blue) ![deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
+![status](https://img.shields.io/badge/status-personal-orange) ![skills](https://img.shields.io/badge/skills-14-purple) ![deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
 
 ---
 
-## Nedir?
+## Neden Claude?
 
-Anthropic'in finans-agent kompozisyonunu (**skill + connector + subagent**) Claude Code'un native
-yapısı üzerinde prototipleyen kişisel laboratuvar. Bu branch hardcoded portföy verisi içerir;
-herkese açık, generic versiyon için `feature/multi-user-setup` branch'ine bak.
+| Claude kapasitesi | Burada nasıl kullanılıyor |
+|---|---|
+| **200k bağlam** | 200 sayfalık yıllık raporu tek geçişte oku |
+| **Vision / PDF** | 10-K, banka ekstresi, grafik ekran görüntüsü — OCR gerekmez |
+| **Extended thinking** | DCF, makro duyarlılık zinciri, vergi optimizasyonu adım adım |
+| **Paralel subagent** | Haber sentiment + endeks karşılaştırması aynı anda |
+| **Tool use** | Yahoo Finance connector — middleware yok, API anahtarı yok |
+| **Çok dilli** | Türkçe/İngilizce finansal analiz, tam bağlamla |
+| **Structured output** | JSON şema ile risk bulguları, portföy verisi |
 
 ## Kurulum
 
@@ -22,34 +28,29 @@ herkese açık, generic versiyon için `feature/multi-user-setup` branch'ine bak
 ./start.sh          # http://localhost:8765
 ```
 
-Veri girişi: `data/portfolio.json` (gitignore'lu, commit edilmez).
+Veri: `data/portfolio.json` (gitignore'lu).
+Cost basis için: `cost_basis_per_unit` + `purchase_date` alanlarını ekle (vergi hasadı için).
 
-## Akış
+## 14 Skill
 
-```
-data/portfolio.json → data-retriever (canlı fiyat) → reviewer (AI risk) → output/latest.json → UI
-```
-
-Tam pipeline: `finops-full-pipeline` workflow (6 aşama):
-Intake → Connector → Review → Intel (haber+endeks) → Rebalance → Synthesis
-
-## Skill Suite (11)
-
-| Skill | Ne yapar |
+| Skill | Claude kapasitesi |
 |---|---|
-| `finops-agent` | Net-değer orkestratörü |
-| `market-researcher` | Canlı hisse/sektör araştırması |
-| `valuation-reviewer` | P/E, EV/EBITDA, peer kıyası |
-| `model-builder` | FX yolu, bear/base/bull projeksiyonları |
-| `earnings-reviewer` | Kazanç vs konsensüs özeti |
-| `pitch-builder` | Yatırım pitchi: bull/bear/balanced |
-| `meeting-preparer` | Toplantı öncesi brifing |
-| `statement-auditor` | Bilanço/gelir/nakit akış denetimi |
-| `gl-reconciler` | Banka ekstresi → mutabakat raporu |
-| `month-end-closer` | Aylık P&L + kur etkisi |
-| `kyc-screener` | 5 boyutlu KYC taraması |
+| `finops-agent` | Tool use, structured output |
+| `market-researcher` | Web search, long context |
+| `valuation-reviewer` | Reasoning, web fetch |
+| `model-builder` | Reasoning, structured output |
+| `earnings-reviewer` | Web fetch, reasoning |
+| `pitch-builder` | Reasoning, web search |
+| `meeting-preparer` | Web search, long context |
+| `statement-auditor` | Long context, reasoning |
+| `gl-reconciler` | Long context, structured output |
+| `month-end-closer` | Long context, reasoning |
+| `kyc-screener` | Web search, reasoning |
+| **`pdf-analyzer`** | **Vision, 200k context** |
+| **`macro-stress`** | **Extended thinking** |
+| **`tax-harvester`** | **Reasoning, structured output** |
 
-## Subagent'lar (5)
+## 5 Subagent
 
 `data-retriever` · `reviewer` · `news-sentiment` · `benchmark-tracker` · `rebalancer`
 
@@ -58,13 +59,17 @@ Intake → Connector → Review → Intel (haber+endeks) → Rebalance → Synth
 `F3` Haberler · `F4` Endeks · `F5` Senaryo · `F6` Dağılım · `F7` Piyasa · `F8` Bulgular ·
 `F9` Raporlar · `F10` Geçmiş · `F11` Rebalans · `F12` CLI
 
+## 6-Aşamalı Pipeline
+
+```
+Intake → Connector → Review → Intel (parallel) → Rebalance → Synthesis
+```
+
 ## Gizlilik Kontrol Listesi
 
-Fork/push öncesi doğrula:
-
-- [ ] `git status` — `data/portfolio.json` ve `output/*.json|*.md` **takip edilmiyor** olmalı
-- [ ] `index.html` / `terminal.js` içinde gerçek bakiye/tutar yok
-- [ ] Hiçbir secret / API anahtarı yok
+- [ ] `data/portfolio.json` ve `output/*` commit edilmiyor
+- [ ] `index.html`/`terminal.js` içinde gerçek bakiye yok
+- [ ] Secret / API anahtarı yok
 
 ## Lisans
 
