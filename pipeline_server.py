@@ -259,8 +259,8 @@ def fetch_dividends():
     equity_qs = {"bist", "us_equity", "eu_equity", "equity"}
     results = []
     for h in port.get("holdings", []):
-        qs = h.get("quote_source", ""); typ = h.get("type", "")
-        if qs not in equity_qs and typ not in ("equity",):
+        qs = h.get("quote_source", "")
+        if qs not in equity_qs:
             continue
         hid = h.get("id", "")
         tk = h.get("ticker") or (hid + ".IS" if qs == "bist" else hid)
