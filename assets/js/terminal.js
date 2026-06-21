@@ -78,7 +78,7 @@ function pipeRun(){
 function quickRefresh(){
   pstat.innerHTML='&gt; canlı fiyatlar çekiliyor...<span class="cur">_</span>';
   return fetch('/api/refresh',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
-    if(d.error){pstat.innerHTML='&gt; <span style="color:#ff4d4d">'+d.error+'</span><span class="cur">_</span>';return;}
+    if(d.error){pstat.innerHTML='&gt; <span style="color:#ff4d4d">'+esc2(d.error)+'</span><span class="cur">_</span>';return;}
     window._watchlist=null;
     fetchJSON('output/watchlist.json').then(function(w){window._watchlist=w;}).catch(function(){});
     fetchJSON('output/latest.json').then(function(data){
@@ -97,7 +97,7 @@ function startRealPipeline(){
   fetch('/api/run',{method:'POST'})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.error){pstat.innerHTML='&gt; <span style="color:#ff9500">'+d.error+'</span><span class="cur">_</span>';return;}
+      if(d.error){pstat.innerHTML='&gt; <span style="color:#ff9500">'+esc2(d.error)+'</span><span class="cur">_</span>';return;}
       if(_pipePolling)clearInterval(_pipePolling);
       var t0=Date.now();
       _pipePolling=setInterval(function(){
@@ -111,14 +111,14 @@ function startRealPipeline(){
               fetchJSON('output/latest.json').then(function(data){
                 updateDashboard(data);
                 if(window.loadHistory)window.loadHistory();
-                pstat.innerHTML='&gt; ✓ <span style="color:#33ff66">'+s.message+'</span> · <a href="output/latest.json" target="_blank" style="color:#33ccff;text-decoration:none">JSON</a><span class="cur">_</span>';
+                pstat.innerHTML='&gt; ✓ <span style="color:#33ff66">'+esc2(s.message)+'</span> · <a href="output/latest.json" target="_blank" style="color:#33ccff;text-decoration:none">JSON</a><span class="cur">_</span>';
               });
-            } else { pstat.innerHTML='&gt; <span style="color:#ff4d4d">'+s.message+'</span><span class="cur">_</span>'; }
+            } else { pstat.innerHTML='&gt; <span style="color:#ff4d4d">'+esc2(s.message)+'</span><span class="cur">_</span>'; }
             return;
           }
           // hâlâ bekliyor: watcher ipucu
           var hint=(el>50)?' <span style="color:var(--text3)">(açık Claude session\'ında watcher çalışıyor mu?)</span>':'';
-          pstat.innerHTML='&gt; <span style="color:#d29922">'+(s.message||'bekleniyor')+'</span> · '+el+'s'+hint+'<span class="cur">_</span>';
+          pstat.innerHTML='&gt; <span style="color:#d29922">'+esc2(s.message||'bekleniyor')+'</span> · '+el+'s'+hint+'<span class="cur">_</span>';
           if(el>360){clearInterval(_pipePolling);pstat.innerHTML='&gt; <span style="color:#ff9500">zaman aşımı — watcher yok mu? Hızlı fiyat için fiyat-yenile kullan</span><span class="cur">_</span>';}
         }).catch(function(){clearInterval(_pipePolling);});
       },2000);
@@ -220,10 +220,10 @@ function updateDashboard(data){
           fh+='<div class="fc '+sevCls2+'" onclick="this.classList.toggle(\'open\')">'
             +'<div class="fc-head">'
             +'<span class="fc-sev" style="color:'+col+'">'+lbl+'</span>'
-            +'<span class="fc-title">'+title+'</span>'
+            +'<span class="fc-title">'+esc2(title)+'</span>'
             +(detail?'<span class="fc-arrow">&#9654;</span>':'')
             +'</div>'
-            +(detail?'<div class="fc-body"><div class="fc-body-inner">'+detail+'</div></div>':'')
+            +(detail?'<div class="fc-body"><div class="fc-body-inner">'+esc2(detail)+'</div></div>':'')
             +'</div>';
         });
         af.innerHTML=fh;
@@ -426,10 +426,10 @@ function mwRow(sym,star,price,ccy,chg,note){
   var chgTxt=(chg==null)?'':(up?'+':'')+chg.toFixed(1).replace('.',',')+'%';
   var col=(chg==null)?'var(--green)':(up?'var(--green)':'var(--red)');
   var pStr=(price==null)?'<span style="color:var(--text3)">—</span>':ccy+num(price);
-  return '<tr><td style="'+(star?'color:var(--accent);font-weight:600':'')+'">'+sym+(star?' ★':'')+'</td>'
+  return '<tr><td style="'+(star?'color:var(--accent);font-weight:600':'')+'">'+esc2(sym)+(star?' ★':'')+'</td>'
     +'<td style="text-align:right;color:'+col+'">'+pStr+'</td>'
     +'<td style="text-align:right;color:'+col+'">'+arrow+' '+chgTxt+'</td>'
-    +'<td style="font-size:9px;color:var(--text3)">'+note+'</td></tr>';
+    +'<td style="font-size:9px;color:var(--text3)">'+esc2(note||'')+'</td></tr>';
 }
 function renderMarketWatch(data){
   try{
@@ -698,7 +698,7 @@ document.addEventListener('keydown',function(e){
   var CMDS={
     help:function(){cl('Komutlar:','#ff9500');cl('&nbsp;&nbsp;ls · pwd · whoami · date · skills · cat CLAUDE.md · portfolio · clear');},
     ls:function(){cl('<span style="color:#33ccff">.claude/</span>&nbsp;&nbsp;<span style="color:#33ccff">data/</span>&nbsp;&nbsp;<span style="color:#33ccff">output/</span>&nbsp;&nbsp;finops-terminal-ultimate.html&nbsp;&nbsp;CLAUDE.md');},
-    pwd:function(){cl('/Users/efaslantas/Desktop/AI-LAB/efa-finops-agentic');},
+    pwd:function(){cl('/app/efa-finops-agentic');},
     whoami:function(){cl('efaslantas');},
     date:function(){cl(new Date().toString());},
     skills:function(){cl('finops-agent · earnings-reviewer · market-researcher · valuation-reviewer · model-builder','#33ff66');cl('statement-auditor · gl-reconciler · month-end-closer · kyc-screener · pitch-builder · meeting-preparer','#fac775');},
@@ -743,7 +743,7 @@ document.addEventListener('keydown',function(e){
         +'<span>'+esc2(a.publisher||'')+'</span>'
         +'<span style="color:'+bcolor+'">'+badge+' · '+date+'</span></div>'
         +'<div style="font-size:10px;line-height:1.4;color:var(--text)">'+esc2(a.title||'')+'</div>'
-        +(a.link?'<div style="margin-top:4px"><a href="'+esc2(a.link)+'" target="_blank" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
+        +(a.link&&/^https?:\/\//i.test(a.link)?'<div style="margin-top:4px"><a href="'+esc2(a.link)+'" target="_blank" rel="noopener noreferrer" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
         +'</div>';
     });
     out.innerHTML=html;

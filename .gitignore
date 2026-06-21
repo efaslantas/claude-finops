@@ -15,8 +15,11 @@ STATE.md
 .claude/settings.local.json
 
 # ─── env / secrets ───
-.env.local
-.env*.local
+.env
+.env.*
+!.env.example
+.mcp.json
+!.mcp.json.example
 
 # ─── Python / işletim sistemi ───
 __pycache__/
