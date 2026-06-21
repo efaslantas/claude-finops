@@ -40,7 +40,7 @@ parallel agents — not a fixed rule engine.
 | **Multilingual** | Turkish and English financial analysis with full context, not translation |
 | **Web search / fetch** | Live news, regulatory filings, earnings releases pulled at analysis time |
 
-### What's implemented vs what's on the roadmap
+### Full capability overview
 
 | Capability | Skill / feature | Status |
 |---|---|---|
@@ -213,6 +213,7 @@ the signal file and runs the workflow.
 index.html               → terminal UI (single page, no build step)
 assets/css/terminal.css  → dark terminal theme
 assets/js/terminal.js    → all UI logic (vanilla JS, no framework)
+assets/fonts/            → self-hosted JetBrains Mono (no CDN dependency)
 pipeline_server.py       → static server + /api bridge (stdlib only)
 .claude/
   skills/                → 22 skill SKILL.md files
@@ -261,7 +262,7 @@ Dockerfile · docker-compose.yml · start.sh · .github/workflows/ci.yml
 }
 ```
 
-`cost_basis_per_unit` + `purchase_date` are optional but required for `tax-harvester`.
+`cost_basis_per_unit` + `purchase_date` are optional fields, but `tax-harvester` needs them to compute unrealized gains/losses.
 
 ---
 
