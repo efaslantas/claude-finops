@@ -8,7 +8,7 @@ Claude Code üzerinde prototipleyen bir sandbox'tır. Katkılar memnuniyetle kar
 Sıfır bağımlılık — yalnızca Python 3.8+ ve (AI akışı için) Claude Code gerekir.
 
 ```bash
-git clone <repo-url> && cd efa-finops-agentic
+git clone https://github.com/efaslantas/claude-finops.git && cd claude-finops
 cp data/portfolio.sample.json data/portfolio.json   # kendi/örnek veriniz
 ./start.sh                                           # http://localhost:8765
 ```

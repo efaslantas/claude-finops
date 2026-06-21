@@ -1,4 +1,4 @@
-# efa-finops-agentic — FinOps Agent Lab
+# claude-finops — FinOps Agent Lab
 
 Bu klasör, Anthropic'in 5 Mayıs 2026'da duyurduğu **finance agent template** yaklaşımını
 (skill + connector + subagent) Claude Code'un native yapısı üzerinde prototiplemek için

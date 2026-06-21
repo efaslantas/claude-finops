@@ -1,7 +1,7 @@
 services:
   finops-terminal:
     build: .
-    image: efa-finops-terminal
+    image: claude-finops-terminal
     container_name: finops-terminal
     ports:
       - "8765:8765"

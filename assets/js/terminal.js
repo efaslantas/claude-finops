@@ -698,15 +698,15 @@ document.addEventListener('keydown',function(e){
   var CMDS={
     help:function(){cl('Komutlar:','#ff9500');cl('&nbsp;&nbsp;ls · pwd · whoami · date · skills · cat CLAUDE.md · portfolio · clear');},
     ls:function(){cl('<span style="color:#33ccff">.claude/</span>&nbsp;&nbsp;<span style="color:#33ccff">data/</span>&nbsp;&nbsp;<span style="color:#33ccff">output/</span>&nbsp;&nbsp;finops-terminal-ultimate.html&nbsp;&nbsp;CLAUDE.md');},
-    pwd:function(){cl('/Users/efaslantas/Desktop/AI-LAB/efa-finops-agentic');},
-    whoami:function(){cl('efaslantas');},
+    pwd:function(){cl('/home/user/claude-finops');},
+    whoami:function(){cl('user');},
     date:function(){cl(new Date().toString());},
     skills:function(){cl('finops-agent · earnings-reviewer · market-researcher · valuation-reviewer · model-builder','#33ff66');cl('statement-auditor · gl-reconciler · month-end-closer · kyc-screener · pitch-builder · meeting-preparer','#fac775');},
     portfolio:function(){cl('Net Worth: &#8378;700.000 | $15.217','#33ff66');cl('Altin: 50g | USD: $1.000 | TL: &#8378;100.000 | NVDA: 4 | GOOGL: 2 | TUPRS: 100lot | ASELS: 50lot | MBG: 5','#7a8fa3');},
-    cat:function(arg){if(arg==='CLAUDE.md'){cl('# efa-finops-agentic — FinOps Agent Lab','#ff9500');cl('Skill + Connector + Subagent sandbox.');}else{cl('cat: '+esc(arg||'')+': dosya bulunamadi','#ff4d4d');}},
+    cat:function(arg){if(arg==='CLAUDE.md'){cl('# claude-finops — FinOps Agent Lab','#ff9500');cl('Skill + Connector + Subagent sandbox.');}else{cl('cat: '+esc(arg||'')+': dosya bulunamadi','#ff4d4d');}},
     clear:function(){co.innerHTML='';}
   };
-  function cliRun(raw){var t=raw.trim();cl('<span style="color:#33ff66">&#10148;</span> <span style="color:#33ccff">~/efa-finops</span> '+esc(t));if(!t)return;hist.push(t);hi=hist.length;var parts=t.split(/\s+/),c=parts[0],arg=parts.slice(1).join(' ');if(CMDS[c])CMDS[c](arg);else cl('zsh: command not found: '+esc(c),'#ff4d4d');if(ct)ct.scrollTop=ct.scrollHeight;}
+  function cliRun(raw){var t=raw.trim();cl('<span style="color:#33ff66">&#10148;</span> <span style="color:#33ccff">~/claude-finops</span> '+esc(t));if(!t)return;hist.push(t);hi=hist.length;var parts=t.split(/\s+/),c=parts[0],arg=parts.slice(1).join(' ');if(CMDS[c])CMDS[c](arg);else cl('zsh: command not found: '+esc(c),'#ff4d4d');if(ct)ct.scrollTop=ct.scrollHeight;}
   cc.addEventListener('keydown',function(e){if(e.key==='Enter'){cliRun(cc.value);cc.value='';}else if(e.key==='ArrowUp'){if(hi>0){hi--;cc.value=hist[hi];}e.preventDefault();}else if(e.key==='ArrowDown'){if(hi<hist.length-1){hi++;cc.value=hist[hi];}else{hi=hist.length;cc.value='';}e.preventDefault();}});
   // CLI panelinin herhangi bir yerine tıkla → input'a odaklan (yazmak için)
   var cliPanel=document.getElementById('p-cli');
