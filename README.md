@@ -19,6 +19,12 @@ tax harvesting, news sentiment, benchmarking and rebalance suggestions.**
 
 ---
 
+![Claude FinOps Terminal — main dashboard showing live portfolio positions, net value, daily P&L and distribution](assets/screenshots/02-dashboard.png)
+
+![Claude FinOps Terminal — scenario projections, asset distribution breakdown and live market tracker](assets/screenshots/01-panels.png)
+
+---
+
 ## 🇬🇧 English
 
 ### Why Claude for finance?
