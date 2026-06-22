@@ -4,9 +4,11 @@ FinOps Terminal — statik dosya sunucusu + JSON köprüsü (yalnızca Python st
 
 Uçlar:
   GET  /                  → index.html (terminal UI)
-  GET  /api/latest        → output/latest.json (net-değer + bulgular)
+  GET  /assets/*          → assets/ (CSS, JS — read-only)
+  GET  /output/*          → output/ (JSON + MD raporlar — read-only)
+  GET  /api/latest        → output/latest.json
   GET  /api/status        → pipeline durumu
-  GET  /api/history       → output/history.json (günlük net-değer + token)
+  GET  /api/history       → output/history.json
   GET  /api/reports       → output/*.md skill çıktıları listesi
   POST /api/refresh       → canlı fiyat çek + net-değer hesapla (LLM YOK, sadece HTTP)
   POST /api/run           → AI analiz SİNYALİ yazar (claude'u ÇALIŞTIRMAZ; RCE yok)
@@ -14,16 +16,35 @@ Uçlar:
 
 Güvenlik: varsayılan bind 127.0.0.1 (FINOPS_BIND ile değişir). Server hiçbir zaman
 claude/alt süreç çalıştırmaz; AI işini açık Claude Code session'ı (watcher) yapar.
+Statik dosya sunucu yalnızca index.html, assets/ ve output/ dizinlerine erişim verir;
+pipeline_server.py, data/ ve .claude/ hiçbir zaman serve edilmez.
 """
-import json, threading, os, urllib.request
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+import json, threading, os, re, time, posixpath, urllib.request
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
-from urllib.parse import urlparse, parse_qs, quote
+from urllib.parse import urlparse, parse_qs, quote, unquote
 
 STATUS = {"state": "idle", "message": "Hazır", "progress": 0}
 LOCK = threading.Lock()
 
 GRAM_PER_OZ = 31.1035
+
+# ── Güvenlik sabitleri ────────────────────────────────────────────────────────
+_LAST_REFRESH = {"t": 0.0}      # rate-limit izleyici (LOCK korumalı)
+_REFRESH_COOLDOWN = 10           # /api/refresh minimum aralığı (saniye)
+_MAX_BODY = 65_536               # 64 KB POST body hard limit
+_MAX_TOKENS = 10_000_000         # token sayacı üst sınırı
+_TICKER_RE = re.compile(r'^[A-Z0-9.\-\^=]{1,20}$')
+_CORS_ORIGIN = os.environ.get("FINOPS_CORS", "*")  # prod'da localhost adresini ver
+_MIME = {
+    ".html": "text/html; charset=utf-8",
+    ".css":  "text/css",
+    ".js":   "application/javascript",
+    ".json": "application/json",
+    ".md":   "text/plain; charset=utf-8",
+    ".png":  "image/png", ".jpg": "image/jpeg",
+    ".svg":  "image/svg+xml", ".ico": "image/x-icon",
+}
 
 
 def yf_quote(ticker):
@@ -185,7 +206,7 @@ def record_run(tokens=0):
     h = _load_history()
     r = h.setdefault("runs", {"pipeline_count": 0, "tokens": 0, "last": None})
     r["pipeline_count"] = r.get("pipeline_count", 0) + 1
-    r["tokens"] = r.get("tokens", 0) + int(tokens or 0)
+    r["tokens"] = r.get("tokens", 0) + min(int(tokens or 0), _MAX_TOKENS)
     r["last"] = datetime.now().astimezone().isoformat()
     try:
         with open(HIST_PATH, "w", encoding="utf-8") as f:
@@ -342,9 +363,97 @@ def compute_rebalance():
     }
 
 
-class Handler(SimpleHTTPRequestHandler):
+class Handler(BaseHTTPRequestHandler):
+
+    # ── Güvenlik yardımcıları ─────────────────────────────────────────────────
+
+    def version_string(self):
+        return "FinOps/1.0"
+
+    def _security_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+
+    def _cors(self):
+        self.send_header("Access-Control-Allow-Origin", _CORS_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+
+    def _json(self, data, code=200):
+        body = json.dumps(data, ensure_ascii=False).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self._cors()
+        self._security_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_file(self, fpath, ctype):
+        """Dosyayı güvenli şekilde serve et — path CWD içinde doğrulanmış olmalı."""
+        if not os.path.isfile(fpath):
+            self.send_response(404)
+            self._security_headers()
+            self.end_headers()
+            return
+        try:
+            with open(fpath, "rb") as f:
+                data = f.read()
+        except (PermissionError, OSError):
+            self.send_response(403)
+            self._security_headers()
+            self.end_headers()
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self._security_headers()
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _serve_static(self, raw_path):
+        """
+        Güvenli statik dosya sunucu.
+        Yalnızca index.html, assets/ ve output/ dizinlerine izin verilir.
+        pipeline_server.py, data/ ve .claude/ hiçbir zaman serve edilmez.
+        """
+        # Query string + URL encoding temizle
+        path = unquote(raw_path.split("?")[0])
+        # posixpath.normpath /../.. gibi traversal'ları / köküne indirger
+        path = posixpath.normpath(path)
+
+        # Kök → index.html
+        if path in ("/", "/index.html"):
+            return self._send_file("index.html", "text/html; charset=utf-8")
+
+        # İzin verilen dizin eşlemeleri: URL prefix → disk dizini
+        allowed = [("/assets/", "assets"), ("/output/", "output")]
+        for url_pfx, dir_pfx in allowed:
+            if path.startswith(url_pfx):
+                rel = path[len(url_pfx):]
+                # İkinci kat traversal koruması: '..' segment içermemeli
+                if any(seg == ".." for seg in rel.split("/")):
+                    self.send_response(403)
+                    self._security_headers()
+                    self.end_headers()
+                    return
+                fpath = os.path.join(dir_pfx, rel)
+                ext = os.path.splitext(rel)[1].lower()
+                ctype = _MIME.get(ext, "application/octet-stream")
+                return self._send_file(fpath, ctype)
+
+        # Hiçbir izin verilen path ile eşleşmedi
+        self.send_response(404)
+        self._security_headers()
+        self.end_headers()
+
+    # ── HTTP metodları ────────────────────────────────────────────────────────
+
     def do_OPTIONS(self):
-        self._cors(); self.end_headers()
+        self.send_response(200)
+        self._cors()
+        self._security_headers()
+        self.end_headers()
 
     def do_GET(self):
         if self.path.startswith("/api/status"):
@@ -363,17 +472,27 @@ class Handler(SimpleHTTPRequestHandler):
                 with open("output/latest.json") as f: raw = f.read()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
-                self._cors(); self.end_headers()
+                self._cors()
+                self._security_headers()
+                self.end_headers()
                 self.wfile.write(raw.encode())
             except Exception:
                 self._json({"error": "output/latest.json bulunamadı"}, 404)
         elif self.path.startswith("/api/history"):
             self._json(_load_history())
         elif self.path.startswith("/api/news"):
-            ticker = parse_qs(urlparse(self.path).query).get("ticker", ["NVDA"])[0]
+            raw_ticker = parse_qs(urlparse(self.path).query).get("ticker", ["NVDA"])[0]
+            # Ticker güvenli format kontrolü
+            ticker = raw_ticker.upper()
+            if not _TICKER_RE.match(ticker):
+                return self._json({"error": "Geçersiz ticker formatı"}, 400)
             self._json(fetch_news(ticker))
         elif self.path.startswith("/api/benchmark"):
-            days = int(parse_qs(urlparse(self.path).query).get("days", ["30"])[0])
+            try:
+                days = int(parse_qs(urlparse(self.path).query).get("days", ["30"])[0])
+                days = max(1, min(days, 365))  # 1–365 aralığında sınırla
+            except (ValueError, IndexError):
+                days = 30
             self._json(fetch_benchmark(days))
         elif self.path.startswith("/api/dividends"):
             self._json(fetch_dividends())
@@ -389,7 +508,6 @@ class Handler(SimpleHTTPRequestHandler):
                     if not fn.endswith(".md") or fn == "README.md":
                         continue
                     path = os.path.join("output", fn)
-                    # tip: dosya adının ilk parçasından (research, valuation, model, earnings, net, portfolio, yearend)
                     kind = fn.split("-")[0]
                     title = ""
                     try:
@@ -409,14 +527,20 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception: pass
             self._json({"reports": reports})
         else:
-            super().do_GET()
+            # Güvenli statik dosya sunucu — yalnızca assets/ ve output/ izinli
+            self._serve_static(self.path)
 
     def do_POST(self):
         if self.path.startswith("/api/refresh"):
-            # Canlı fiyat + net-değer yenile (LLM YOK, sadece HTTP) — UI butonu bunu çağırır
+            # Rate limit: aynı anda birden fazla yenileme isteğini engelle
+            now = time.time()
             with LOCK:
                 if STATUS.get("state") == "refreshing":
                     return self._json({"error": "Yenileme zaten sürüyor"})
+                if now - _LAST_REFRESH["t"] < _REFRESH_COOLDOWN:
+                    wait = int(_REFRESH_COOLDOWN - (now - _LAST_REFRESH["t"]))
+                    return self._json({"error": f"Çok sık istek. {wait}s bekleyin."}, 429)
+                _LAST_REFRESH["t"] = now
                 STATUS.update({"state": "refreshing", "message": "Canlı fiyatlar çekiliyor...", "progress": 30})
             try:
                 res = live_refresh()
@@ -434,14 +558,42 @@ class Handler(SimpleHTTPRequestHandler):
             if "?" in self.path:
                 for kv in self.path.split("?", 1)[1].split("&"):
                     if kv.startswith("tokens="):
-                        try: tokens = int(kv.split("=", 1)[1])
-                        except Exception: pass
+                        try:
+                            tokens = min(int(kv.split("=", 1)[1]), _MAX_TOKENS)
+                        except Exception:
+                            pass
             r = record_run(tokens)
             self._json({"status": "recorded", **r})
         elif self.path.startswith("/api/alerts"):
-            ln = int(self.headers.get("Content-Length", 0))
-            body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
-            save_alerts(body)
+            # Body boyutu limiti
+            try:
+                ln = int(self.headers.get("Content-Length", 0))
+            except (ValueError, TypeError):
+                ln = 0
+            if ln > _MAX_BODY:
+                return self._json({"error": "İstek gövdesi çok büyük"}, 413)
+            try:
+                body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return self._json({"error": "Geçersiz JSON"}, 400)
+            # Alarm kayıtlarını sanitize et: yalnızca bilinen format
+            raw_alerts = body.get("alerts", [])
+            clean = []
+            for a in raw_alerts:
+                tk = str(a.get("ticker", "")).upper().strip()
+                if not _TICKER_RE.match(tk):
+                    continue
+                try:
+                    price = float(a.get("price", 0))
+                    if price <= 0 or price > 1_000_000_000:
+                        continue
+                except (ValueError, TypeError):
+                    continue
+                direction = a.get("dir", "above")
+                if direction not in ("above", "below"):
+                    direction = "above"
+                clean.append({"ticker": tk, "dir": direction, "price": price})
+            save_alerts({"alerts": clean})
             self._json({"status": "saved"})
         elif self.path.startswith("/api/rebalance"):
             self._json(compute_rebalance())
@@ -455,26 +607,15 @@ class Handler(SimpleHTTPRequestHandler):
             now_iso = datetime.now().astimezone().isoformat()
             with open("output/pipeline-trigger.json", "w", encoding="utf-8") as f:
                 json.dump({"triggered_at": now_iso, "by": "finops-terminal-ui"}, f)
-            # status'u running'e çek (watcher bitirene kadar eski 'done' görünmesin)
             with open("output/pipeline-status.json", "w", encoding="utf-8") as f:
                 json.dump({"state": "running", "progress": 10,
                            "message": "AI analizi istendi — Claude watcher bekleniyor..."}, f)
             self._json({"status": "triggered",
                         "note": "Sinyal yazıldı. Açık Claude session'ı pipeline'ı çalıştıracak; /api/status ile izle."})
         else:
-            self.send_response(404); self.end_headers()
-
-    def _json(self, data, code=200):
-        body = json.dumps(data, ensure_ascii=False).encode()
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self._cors(); self.end_headers()
-        self.wfile.write(body)
-
-    def _cors(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            self.send_response(404)
+            self._security_headers()
+            self.end_headers()
 
     def log_message(self, fmt, *args):
         pass  # quiet
@@ -482,7 +623,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = 8765
-    # Güvenlik: varsayılan localhost. Docker için FINOPS_BIND=0.0.0.0 verilir.
     host = os.environ.get("FINOPS_BIND", "127.0.0.1")
     print(f"FinOps Terminal  →  http://localhost:{port}/  (bind {host})")
     print(f"Hızlı fiyat       →  POST /api/refresh (Python, LLM yok)")
