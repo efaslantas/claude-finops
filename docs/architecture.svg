@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1180" height="800" viewBox="0 0 1180 800" font-family="'JetBrains Mono','SF Mono',monospace">
   <rect width="1180" height="800" fill="#0b0e14"/>
-  <text x="40" y="44" fill="#e6edf3" font-size="22" font-weight="700">EFA FinOps — Mimari Akışı</text>
+  <text x="40" y="44" fill="#e6edf3" font-size="22" font-weight="700">Claude FinOps — Mimari Akışı</text>
   <text x="40" y="68" fill="#6e7681" font-size="13">Tek paylaşılan veri (output/latest.json) · iki bağımsız yol</text>
 
   <!-- legend -->

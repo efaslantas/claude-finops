@@ -1,7 +1,7 @@
 {
   "type": "excalidraw",
   "version": 2,
-  "source": "efa-finops-agentic",
+  "source": "claude-finops",
   "elements": [
     {
       "id": "title",
@@ -29,13 +29,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "EFA FinOps Terminal — Mimari (güvenli · UI-tetiklemeli)",
+      "text": "Claude FinOps Terminal — Mimari (güvenli · UI-tetiklemeli)",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "left",
       "verticalAlign": "middle",
       "containerId": null,
-      "originalText": "EFA FinOps Terminal — Mimari (güvenli · UI-tetiklemeli)",
+      "originalText": "Claude FinOps Terminal — Mimari (güvenli · UI-tetiklemeli)",
       "lineHeight": 1.25,
       "baseline": 26
     },

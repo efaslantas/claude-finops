@@ -51,7 +51,7 @@
   </g>
 
   <!-- title block -->
-  <text x="32" y="268" fill="#e6edf3" font-size="30" font-weight="700">EFA FinOps Terminal</text>
+  <text x="32" y="268" fill="#e6edf3" font-size="30" font-weight="700">Claude FinOps Terminal</text>
   <text x="32" y="300" fill="#8b949e" font-size="15">Claude-native finans agent template — canlı net-değer · AI risk bulguları · senaryo · token takibi</text>
 
   <!-- feature chips -->
