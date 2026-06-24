@@ -1,29 +1,29 @@
 {
   "timestamp": "2026-01-01T12:00:00+03:00",
-  "net_worth_try": 700000,
-  "net_worth_usd": 15217,
-  "prev_net_worth_try": 695000,
+  "net_worth_try": 803250,
+  "net_worth_usd": 17462,
+  "prev_net_worth_try": 798000,
   "fx_rates": { "usdtry": 46.00, "eurtry": 53.00 },
   "asset_class_breakdown": {
-    "Emtia": { "value": 325000, "percentage": 46.43 },
-    "Nakit": { "value": 146000, "percentage": 20.86 },
-    "Hisse": { "value": 229000, "percentage": 32.71 }
+    "Emtia": { "value": 325000, "percentage": 40.46 },
+    "Nakit": { "value": 146000, "percentage": 18.18 },
+    "Hisse": { "value": 113750, "percentage": 14.16 },
+    "Kripto": { "value": 218500, "percentage": 27.20 }
   },
   "holdings_with_prices": [
-    { "id": "GRAM_ALTIN", "quantity_grams": 50, "price_try": 6500, "value_try": 325000 },
-    { "id": "TL_CASH", "amount": 100000, "value_try": 100000 },
-    { "id": "USD_CASH", "amount": 1000, "rate": 46.00, "value_try": 46000 },
-    { "id": "EUR_CASH", "amount": 0, "rate": 53.00, "value_try": 0 },
-    { "id": "NVDA", "quantity": 4, "price": 205, "price_usd": 205, "value_try": 37720 },
-    { "id": "GOOGL", "quantity": 2, "price": 365, "price_usd": 365, "value_try": 33580 },
-    { "id": "TUPRS", "quantity": 100, "price": 227, "value_try": 22700 },
-    { "id": "ASELS", "quantity": 50, "price": 395, "value_try": 19750 },
-    { "id": "MBG", "quantity": 5, "price": 47, "price_eur": 47, "value_try": 12455 }
+    { "id": "GOLD_GRAM", "name": "Gram Altın", "type": "commodity", "ccy": "USD", "quantity": 50, "price_try": 6500, "value_try": 325000 },
+    { "id": "TRY_CASH", "name": "TL Nakit", "type": "cash", "ccy": "TRY", "amount": 100000, "value_try": 100000 },
+    { "id": "USD_CASH", "name": "USD Nakit", "type": "cash", "ccy": "USD", "amount": 1000, "rate": 46.00, "value_try": 46000 },
+    { "id": "NVDA", "name": "NVIDIA", "type": "equity", "ccy": "USD", "quantity": 4, "price": 205, "price_usd": 205, "value_try": 37720 },
+    { "id": "GOOGL", "name": "Alphabet", "type": "equity", "ccy": "USD", "quantity": 2, "price": 365, "price_usd": 365, "value_try": 33580 },
+    { "id": "TUPRS", "name": "Tüpraş", "type": "equity", "ccy": "TRY", "quantity": 100, "price": 227, "value_try": 22700 },
+    { "id": "ASELS", "name": "Aselsan", "type": "equity", "ccy": "TRY", "quantity": 50, "price": 395, "value_try": 19750 },
+    { "id": "BTC", "name": "Bitcoin", "type": "crypto", "ccy": "USD", "quantity": 0.05, "price": 4370000, "price_usd": 95000, "value_try": 218500 }
   ],
-  "quality_report": { "total_holdings": 9, "successfully_fetched": 8 },
+  "quality_report": { "total_holdings": 8, "successfully_fetched": 8 },
   "reviewer_findings": [
     { "severity": "BİLGİ", "issue": "ÖRNEK VERİ: Bu output/latest.sample.json örnek bir snapshot'tır. Gerçek analiz için Claude Code'da /workflows finops-full-pipeline çalıştırın." },
-    { "severity": "ÖNERİ", "issue": "Konsantrasyon: Örnek portföyde altın ağırlığı ~%46. Çeşitlendirme dengesi izlenebilir." },
+    { "severity": "ÖNERİ", "issue": "Konsantrasyon: Örnek portföyde altın ağırlığı ~%40. Çeşitlendirme dengesi izlenebilir." },
     { "severity": "BİLGİ", "issue": "YATIRIM TAVSİYESİ DEĞİLDİR. Fiyatlar indikatif/gecikmeli olabilir." }
   ]
 }

@@ -10,7 +10,7 @@ Portföyün canlı net-değerini, varlık kırılımını ve FX senaryolarını 
 ## AŞAMA 1: INTAKE
 `data/portfolio.json` oku:
 - `owner`, `as_of`, `base_currency` (TRY)
-- `holdings[]`: id, name, quantity (ya da quantity_grams / amount), quote_source
+- `holdings[]`: `id`, `name`, `type` (commodity/cash/equity/crypto), `ticker` (Yahoo), `ccy`, `quantity` ya da `amount`
 - `fx_assumptions`: usdtry, eurtry
 
 **Kontrol:** Quantity null? Hata yok; 0 kabul et ve devam et.
@@ -18,18 +18,19 @@ Portföyün canlı net-değerini, varlık kırılımını ve FX senaryolarını 
 ## AŞAMA 2: CONNECTOR — Canlı Fiyat Çek
 **Subagent çağrı: data-retriever**
 
-Her holding'in `quote_source`'a göre WebFetch yap:
-- `bist` → Bigpara (TUPRS, ASELS, ISCTR)
-- `us_equity` → Google Finance (NVDA, TSLA, AMD, SPCX)
-- `gold_try` → Bigpara (gram altın)
-- `usdtry`, `eurtry` → Investing.com (kur)
+Her holding'in `type` + `ticker`'ına göre WebFetch yap (Yahoo Finance v8 chart API):
+- `equity` → holding'in `ticker`'ı (BIST hisseleri `.IS` son ekli: `TUPRS.IS`, `ASELS.IS`)
+- `commodity` → holding'in `ticker`'ı (ör. altın `GC=F`)
+- `crypto` → holding'in `ticker`'ı (ör. `BTC-USD`)
+- `cash` → TRY ise sabit (fetch yok); değilse FX çevir (ör. `USDTRY=X`)
 
 **Output:** Structured JSON
 ```json
 {
   "holdings": [
-    {"id":"TUPRS","quantity":50,"price":240.80,"currency":"TRY","source":"bigpara","timestamp":"2026-06-16T15:30Z"},
-    {"id":"GRAM_ALTIN","quantity_grams":89,"price":6456,"currency":"TRY","source":"bigpara"}
+    {"id":"TUPRS","type":"equity","ticker":"TUPRS.IS","quantity":100,"price":227.00,"currency":"TRY","source":"yahoo/TUPRS.IS","timestamp":"2026-06-16T15:30Z"},
+    {"id":"GOLD_GRAM","type":"commodity","ticker":"GC=F","quantity":50,"price":6500,"currency":"TRY","source":"yahoo/GC=F"},
+    {"id":"BTC","type":"crypto","ticker":"BTC-USD","quantity":0.05,"price":4370000,"currency":"TRY","source":"yahoo/BTC-USD"}
   ],
   "fx_rates": {"usdtry":46.71,"eurtry":53.60},
   "quality": "100% fetched, latency <2min"
@@ -48,7 +49,7 @@ Her holding'in `quote_source`'a göre WebFetch yap:
 
 Denetim:
 - Kur varsayımı uygunmu? (hedging açığı)
-- Quote_source mix (BIST + Nasdaq + FX + commodity) para birimi tutarlı mı?
+- Varlık `type` mix'i (equity + cash + commodity + crypto) para birimi tutarlı mı?
 - Net-değer formül: ∑(quantity_i × price_i × fx_rate_if_needed) doğru mu?
 - Ağırlık hesabı: (value_i / total) × 100% = %
 
@@ -96,7 +97,7 @@ User: "finops-agent çalıştır"
 - **Data:** `data/portfolio.json` (girdi fixture)
 - **Output:** `output/*.md` (rapor)
 - **Dashboard:** `finops-terminal.html` (FX senaryo + output paneli)
-- **Connector mapping:** `connectors/live-quotes/README.md` (quote_source → kaynak)
+- **Connector mapping:** `connectors/live-quotes/README.md` (type + ticker → kaynak)
 
 ## Kısıtlamalar & Varsayımlar
 - Kur **sabit tutulur** (fx_assumptions'dan); gerçekte TL zayıflarken altın fiyatı da artar

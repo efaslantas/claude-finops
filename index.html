@@ -22,30 +22,7 @@
 
 <!-- TOP TICKER -->
 <div class="ticker-bar" id="ticker-bar">
-  <div class="ticker-track" id="ticker-track">
-    <div class="ticker-item"><span class="sym">TUPRS</span> <span class="val" id="tk-tuprs">225,40</span> <span class="chg up" id="tk-tuprs-c">▲0,3%</span></div>
-    <div class="ticker-item"><span class="sym">ASELS</span> <span class="val" id="tk-asels">387,75</span> <span class="chg up" id="tk-asels-c">▲1,2%</span></div>
-    <div class="ticker-item"><span class="sym">NVDA</span> <span class="val" id="tk-nvda">207,32</span> <span class="chg up" id="tk-nvda-c">▲0,4%</span></div>
-    <div class="ticker-item"><span class="sym">GOOGL</span> <span class="val" id="tk-googl">366,11</span> <span class="chg up" id="tk-googl-c">▲3,2%</span></div>
-    <div class="ticker-item"><span class="sym">MBG</span> <span class="val" id="tk-mbg">€46,90</span> <span class="chg dn" id="tk-mbg-c">▼3,9%</span></div>
-    <div class="ticker-item"><span class="sym">THYAO</span> <span class="val">312,00</span> <span class="chg up">▲2,1%</span></div>
-    <div class="ticker-item"><span class="sym">KCHOL</span> <span class="val">163,20</span> <span class="chg up">▲0,8%</span></div>
-    <div class="ticker-item"><span class="sym">AKBNK</span> <span class="val">58,75</span> <span class="chg up">▲1,5%</span></div>
-    <div class="ticker-item"><span class="sym">XAU/TRY</span> <span class="val" id="tk-xau">6.430</span> <span class="chg up" id="tk-xau-c">▲0,4%</span></div>
-    <div class="ticker-item"><span class="sym">USD/TRY</span> <span class="val" id="tk-usd">46,30</span> <span class="chg dn" id="tk-usd-c">▼0,2%</span></div>
-    <div class="ticker-item"><span class="sym">EUR/TRY</span> <span class="val" id="tk-eur">53,53</span> <span class="chg up" id="tk-eur-c">▲0,1%</span></div>
-    <div class="ticker-item"><span class="sym">TUPRS</span> <span class="val">225,40</span> <span class="chg up">▲0,3%</span></div>
-    <div class="ticker-item"><span class="sym">ASELS</span> <span class="val">387,75</span> <span class="chg up">▲1,2%</span></div>
-    <div class="ticker-item"><span class="sym">NVDA</span> <span class="val">207,32</span> <span class="chg up">▲0,4%</span></div>
-    <div class="ticker-item"><span class="sym">GOOGL</span> <span class="val">366,11</span> <span class="chg up">▲3,2%</span></div>
-    <div class="ticker-item"><span class="sym">MBG</span> <span class="val">€46,90</span> <span class="chg dn">▼3,9%</span></div>
-    <div class="ticker-item"><span class="sym">THYAO</span> <span class="val">312,00</span> <span class="chg up">▲2,1%</span></div>
-    <div class="ticker-item"><span class="sym">KCHOL</span> <span class="val">163,20</span> <span class="chg up">▲0,8%</span></div>
-    <div class="ticker-item"><span class="sym">AKBNK</span> <span class="val">58,75</span> <span class="chg up">▲1,5%</span></div>
-    <div class="ticker-item"><span class="sym">XAU/TRY</span> <span class="val">6.430</span> <span class="chg up">▲0,4%</span></div>
-    <div class="ticker-item"><span class="sym">USD/TRY</span> <span class="val">46,30</span> <span class="chg dn">▼0,2%</span></div>
-    <div class="ticker-item"><span class="sym">EUR/TRY</span> <span class="val">53,53</span> <span class="chg up">▲0,1%</span></div>
-  </div>
+  <div class="ticker-track" id="ticker-track"><div class="ticker-item"><span class="sym">—</span> <span class="val">canlı veri bekleniyor</span></div></div>
 </div>
 
 <div class="mkt-bar" id="mkt-bar">
@@ -105,11 +82,7 @@
     <div class="hdr">TAKİP LİSTESİ <span style="font-size:8px;color:var(--text3);font-weight:400;margin-left:auto">portföy + izleme</span></div>
     <div class="body">
       <div>
-        <div class="wl-row"><span class="wl-ticker">TUPRS</span><span class="wl-price" id="wl-tuprs">225,40</span><span class="wl-chg" id="wl-tuprs-c">—</span></div>
-        <div class="wl-row"><span class="wl-ticker">ASELS</span><span class="wl-price" id="wl-asels">387,75</span><span class="wl-chg" id="wl-asels-c">—</span></div>
-        <div class="wl-row"><span class="wl-ticker">XAU/g</span><span class="wl-price" id="wl-xau">6.430</span><span class="wl-chg" id="wl-xau-c">—</span></div>
-        <div class="wl-row"><span class="wl-ticker">USD/TRY</span><span class="wl-price" id="wl-usd">46,30</span><span class="wl-chg" id="wl-usd-c">—</span></div>
-        <div class="wl-row"><span class="wl-ticker">EUR/TRY</span><span class="wl-price" id="wl-eur">53,53</span><span class="wl-chg" id="wl-eur-c">—</span></div>
+        <div id="wl-rows"></div>
         <div class="wl-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px"><span class="wl-ticker" style="color:var(--text2);font-size:8px">NET DEĞ.</span><span class="wl-price" id="wl-net" style="color:var(--green);font-weight:700">₺700.000</span><span class="wl-chg" id="wl-net-c">—</span></div>
       </div>
     </div>

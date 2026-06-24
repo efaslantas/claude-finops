@@ -21,7 +21,7 @@ Her varlığın döviz maruziyetini ayrıştır:
 - TRY-bazlı (BIST hisse, TL nakit, gram altın TRY): kurdan **dolaylı** etkilenir
   - **Önemli:** Altın USD-bazlı işlem görür → USD/TRY +%X ⇒ altın TRY değeri ~+%X
 - USD-bazlı (USD nakit, NVDA, GOOGL): kurdan **doğrudan** +%X
-- EUR-bazlı (MBG, EUR nakit): EUR/TRY hareketinden
+- EUR-bazlı (varsa EUR nakit/hisse): EUR/TRY hareketinden
 Çıktı: USD/TRY −%10 / baz / +%10 / +%20 için net-değer + % değişim tablosu.
 **Bütünleşik etki:** sadece nakdi değil, altın + USD hisseleri de dahil et.
 

@@ -83,7 +83,7 @@ AL: 1 NVDA (~₺9.500) + ₺10.000 Hisse ETF → Hisse %12 → %40'a getirir
   "trades": [
     {
       "action": "SAT",
-      "asset": "GRAM_ALTIN",
+      "asset": "GOLD_GRAM",
       "amount_try": 175000,
       "reason": "Emtia ağırlığı %25 fazla",
       "estimated_cost_try": 280

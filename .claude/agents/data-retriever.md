@@ -9,20 +9,21 @@ Portföyün holding'lerinin canlı piyasa fiyatlarını çek, TRY'ye dönüştü
 
 ## Görevi
 1. `data/portfolio.json` oku → `holdings[]` array + `fx_assumptions`
-2. Her holding'in `quote_source`'a göre WebFetch/WebSearch yap
+2. Her holding'in `type` + `ticker`'ına göre WebFetch/WebSearch yap
 3. Fiyatları normalize et (hepsini TRY'de ver)
 4. Structured JSON döndür: holding başına `{fiyat, para, kaynak, timestamp}`
 5. Data quality summary: başarıyla çekilen sayı, başarısız, latency, uyarılar
 
-## Quote Source Eşlemesi
+## Tip Eşlemesi (`type` + `ticker`)
 
-| quote_source | Kaynak | Nasıl Çek | Para | Örnek |
+Her holding kendi Yahoo `ticker`'ını ve `type`'ını taşır (bkz. `data/portfolio.sample.json`). Fetch yöntemi `type`'tan türetilir:
+
+| `type` | Kaynak | Nasıl Çek | Para | Örnek |
 |---|---|---|---|---|
-| `bist` | Bigpara.com / Borsa İstanbul | WebFetch: "TUPRS BIST fiyat" | TRY | 240,80 |
-| `us_equity` | Google Finance / Yahoo | WebFetch: "NVDA price" | USD | 205,19 |
-| `gold_try` | Bigpara | WebFetch: "gram altın fiyat" | TRY | 6.456 |
-| `usdtry` | Investing.com | WebFetch: "USD TRY" | — | 46,71 |
-| `eurtry` | Investing.com | WebFetch: "EUR TRY" | — | 53,60 |
+| `equity` | Yahoo (BIST `.IS` son ekli) | `chart/{ticker}` (ör. `TUPRS.IS`, `NVDA`) | native ccy | 227,00 / 205,19 |
+| `commodity` | Yahoo | `chart/{ticker}` (ör. altın `GC=F`) | USD → TRY | 6.456 |
+| `crypto` | Yahoo | `chart/{ticker}` (ör. `BTC-USD`) | USD → TRY | 4.370.000 |
+| `cash` | — / Yahoo FX | TRY sabit; değilse `USDTRY=X` | native ccy | 46,71 |
 
 ## İşlem Adımları
 

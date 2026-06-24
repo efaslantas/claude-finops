@@ -134,7 +134,7 @@ function updateDashboard(data){
   // canlı referansları veriden güncelle (yoksa fallback'te kalır)
   if(data.prev_net_worth_try)BASE=data.prev_net_worth_try;
   try{var _alt=(data.asset_class_breakdown&&data.asset_class_breakdown['Emtia'])?data.asset_class_breakdown['Emtia'].value:0;
-    var _tl=(data.holdings_with_prices||[]).reduce(function(s,h){return s+(h.id==='TL_CASH'?(h.value_try||0):0);},0);
+    var _tl=(data.holdings_with_prices||[]).reduce(function(s,h){return s+((h.type==='cash'&&(h.ccy||'TRY').toUpperCase()==='TRY')?(h.value_try||0):0);},0);
     if(_alt)FIXED=_alt+_tl;}catch(e){}
   try{var nw=data.net_worth_try||0;
     var chg=(nw-BASE)/BASE*100;
@@ -184,12 +184,12 @@ function updateDashboard(data){
   try{var fxd=data.fx_rates||{usdtry:46.30,eurtry:53.53};
     var lur=document.getElementById('live-usd-rate');if(lur)lur.textContent=num(fxd.usdtry);
     var ler=document.getElementById('live-eur-rate');if(ler)ler.textContent=num(fxd.eurtry);
-    // FX senaryo bacakları: TRY-sabit (TL nakit+BIST) / USD-bağlı (altın+USD nakit+NVDA+GOOGL) / EUR-bağlı (MBG+EUR nakit)
-    try{var _hp=data.holdings_with_prices||[];function _v(id){for(var i=0;i<_hp.length;i++)if(_hp[i].id===id)return _hp[i].value_try||0;return 0;}
-      var usdIds=['GRAM_ALTIN','USD_CASH','NVDA','GOOGL'],eurIds=['MBG','EUR_CASH'],tryIds=['TL_CASH','TUPRS','ASELS'];
-      var usdLeg=usdIds.reduce(function(s,id){return s+_v(id);},0);
-      var eurLeg=eurIds.reduce(function(s,id){return s+_v(id);},0);
-      var tryLeg=tryIds.reduce(function(s,id){return s+_v(id);},0);
+    // FX senaryo bacakları: her holding'in para birimine (ccy) göre grupla — USD/EUR/diğer(TRY-sabit)
+    // (altın/kripto USD-bazlı işlem görür → ccy=USD ile doğru bacağa düşer)
+    try{var _hp=data.holdings_with_prices||[];
+      var usdLeg=0,eurLeg=0,tryLeg=0;
+      for(var _i=0;_i<_hp.length;_i++){var _c=(_hp[_i].ccy||'TRY').toUpperCase(),_vv=_hp[_i].value_try||0;
+        if(_c==='USD')usdLeg+=_vv;else if(_c==='EUR')eurLeg+=_vv;else tryLeg+=_vv;}
       if(usdLeg+eurLeg+tryLeg>0)_fxLegs={tryFixed:tryLeg,usdLeg:usdLeg,eurLeg:eurLeg,baseUsd:fxd.usdtry,baseEur:fxd.eurtry};
     }catch(e3){}
     if(typeof buildScenTable==='function')buildScenTable(fxd.usdtry,fxd.eurtry);
@@ -246,41 +246,37 @@ function updateDashboard(data){
     var hp=data.holdings_with_prices||[],fx=data.fx_rates||{};
     var nwv=data.net_worth_try||885000;
     function byId(arr,id){for(var i=0;i<arr.length;i++)if(arr[i].id===id)return arr[i];return null;}
-    var tuprs=byId(hp,'TUPRS'),asels=byId(hp,'ASELS'),xau=byId(hp,'GRAM_ALTIN');
-    var nvdaH=byId(hp,'NVDA'),googlH=byId(hp,'GOOGL'),mbgH=byId(hp,'MBG');
-    var usdH=byId(hp,'USD_CASH'),tlH=byId(hp,'TL_CASH'),eurH=byId(hp,'EUR_CASH');
 
-    function setWl(pid,pc,val,chg){
-      var p=document.getElementById(pid),c=document.getElementById(pc);
-      if(p)p.textContent=val;
-      if(c){c.textContent=chg||'—';c.className='wl-chg'+(chg&&chg[0]==='-'?' dn':'');}
+    // F7 İZLEME LİSTESİ (#wl-rows) — portföy holdings + FX referansları, canlı (kişisel id varsaymaz)
+    var wlBox=document.getElementById('wl-rows');
+    if(wlBox){
+      var wlH=hp.map(function(h){
+        var pr=(h.price_try!=null?'₺'+num(h.price_try):(h.price!=null?num(h.price):'—'));
+        return '<div class="wl-row"><span class="wl-ticker">'+esc2(h.name||h.id)+'</span><span class="wl-price">'+pr+'</span><span class="wl-chg">—</span></div>';
+      }).join('');
+      if(fx.usdtry)wlH+='<div class="wl-row"><span class="wl-ticker">USD/TRY</span><span class="wl-price">'+num(fx.usdtry)+'</span><span class="wl-chg">—</span></div>';
+      if(fx.eurtry)wlH+='<div class="wl-row"><span class="wl-ticker">EUR/TRY</span><span class="wl-price">'+num(fx.eurtry)+'</span><span class="wl-chg">—</span></div>';
+      wlBox.innerHTML=wlH;
     }
-    if(tuprs)setWl('wl-tuprs','wl-tuprs-c',num(tuprs.price),'');
-    if(asels)setWl('wl-asels','wl-asels-c',num(asels.price),'');
-    if(xau)setWl('wl-xau','wl-xau-c',num(xau.price_try),'');
-    if(fx.usdtry)setWl('wl-usd','wl-usd-c',num(fx.usdtry),'');
-    if(fx.eurtry)setWl('wl-eur','wl-eur-c',num(fx.eurtry),'');
 
     var nwEl=document.getElementById('wl-net'),nwcEl=document.getElementById('wl-net-c');
     if(nwEl)nwEl.textContent='₺'+fmt(nwv);
     var chgPct=((nwv-BASE)/BASE*100);
     if(nwcEl){nwcEl.textContent=(chgPct>=0?'+':'')+chgPct.toFixed(1)+'%';nwcEl.className='wl-chg'+(chgPct<0?' dn':'');}
 
-    function setTk(vid,cid,val,up){
-      var v=document.getElementById(vid),c=document.getElementById(cid);
-      if(v)v.textContent=val;
-      if(c){c.className='chg '+(up?'up':'dn');}
-    }
-    if(tuprs)setTk('tk-tuprs','tk-tuprs-c',num(tuprs.price),true);
-    if(asels)setTk('tk-asels','tk-asels-c',num(asels.price),true);
-    if(xau)setTk('tk-xau','tk-xau-c',num(xau.price_try),true);
-    if(fx.usdtry)setTk('tk-usd','tk-usd-c',num(fx.usdtry),false);
-    if(fx.eurtry)setTk('tk-eur','tk-eur-c',num(fx.eurtry),true);
-    if(nvdaH)setTk('tk-nvda','tk-nvda-c','$'+num(nvdaH.price),true);
-    if(googlH)setTk('tk-googl','tk-googl-c','$'+num(googlH.price),true);
-    if(mbgH)setTk('tk-mbg','tk-mbg-c','€'+num(mbgH.price),false);
-    // ticker'ın kayan kopya setini canlı ilk setle senkronla (stale 387,75 vb. kalmasın)
-    try{var _trk=document.getElementById('ticker-track');if(_trk){var _it=_trk.querySelectorAll('.ticker-item');var _half=_it.length/2;for(var _k=_half;_k<_it.length;_k++){_it[_k].innerHTML=_it[_k-_half].innerHTML;}}}catch(e4){}
+    // KAYAN TICKER (#ticker-track) — hisse/kripto/emtia holdings + FX referansları, canlı
+    try{var _trk=document.getElementById('ticker-track');
+      if(_trk){
+        var _ti=hp.filter(function(h){return h.type==='equity'||h.type==='crypto'||h.type==='commodity';}).map(function(h){
+          var cur=(h.ccy==='USD'?'$':(h.ccy==='EUR'?'€':'')),pr=(h.price!=null?num(h.price):(h.price_try!=null?num(h.price_try):'—'));
+          return '<div class="ticker-item"><span class="sym">'+esc2(h.id)+'</span> <span class="val">'+cur+pr+'</span></div>';
+        });
+        if(fx.usdtry)_ti.push('<div class="ticker-item"><span class="sym">USD/TRY</span> <span class="val">'+num(fx.usdtry)+'</span></div>');
+        if(fx.eurtry)_ti.push('<div class="ticker-item"><span class="sym">EUR/TRY</span> <span class="val">'+num(fx.eurtry)+'</span></div>');
+        var _tj=_ti.join('');
+        if(_tj)_trk.innerHTML=_tj+_tj; // kesintisiz kayma için iki kopya
+      }
+    }catch(e4){}
 
     // POZİSYONLAR tablosu (#holdings-rows) — hp dizisinden canlı doldur
     var hb=document.getElementById('holdings-rows');
@@ -303,27 +299,24 @@ function updateDashboard(data){
 
     // F5 SENARYO: tablo + projeksiyon, hepsi canlı fiyat × senaryo çarpanı (tek kaynak)
     try{
-      // her hisse için bear/base/bull çarpanı (analist hedef aralığından türetilmiş)
-      var SCEN=[
-        {id:'ASELS',h:asels, cur:'',  col:'var(--amber)', m:[0.90,1.14,1.39]},
-        {id:'TUPRS',h:tuprs, cur:'',  col:'var(--amber)', m:[0.995,1.46,1.72]},
-        {id:'NVDA', h:nvdaH, cur:'$', col:'var(--accent)',m:[0.88,1.33,1.66]},
-        {id:'GOOGL',h:googlH,cur:'$', col:'var(--accent)',m:[0.89,1.14,1.33]}
-      ];
+      // Hisse/kripto için tek-tip bear/base/bull şoku (generic; tek hisseye özel analist hedefi varsaymaz)
+      var SCEN_M=[0.85,1.08,1.30];
+      var scenH=hp.filter(function(h){return h.type==='equity'||h.type==='crypto';});
       var tbl=document.getElementById('scen-rows-tbl');
       var staticV=nwv, projB=0,projBa=0,projBu=0;
       var rowsH='';
-      SCEN.forEach(function(s){
-        if(!s.h||!s.h.price)return;
-        var p=s.h.price, v=s.h.value_try||0;
-        staticV-=v; // hisse-dışı (altın+nakit+BIST diğer) sabit kalan
-        projB+=v*s.m[0]; projBa+=v*s.m[1]; projBu+=v*s.m[2];
-        function cell(mult,c){var pr=p*mult,pct=Math.round((mult-1)*100);return '<td style="text-align:right;color:'+c+'">'+s.cur+num(pr)+' <span style="font-size:8px">'+(pct>=0?'+':'')+pct+'%</span></td>';}
-        rowsH+='<tr><td style="color:'+s.col+'">'+s.id+'</td>'
-          +'<td style="text-align:right">'+s.cur+num(p)+'</td>'
-          +cell(s.m[0],'var(--red)')+cell(s.m[1],'var(--amber)')+cell(s.m[2],'var(--green)')+'</tr>';
+      scenH.forEach(function(h){
+        var p=(h.price!=null?h.price:h.price_try); if(!p)return;
+        var v=h.value_try||0;
+        staticV-=v; // hisse/kripto-dışı (altın+nakit) sabit kalan
+        projB+=v*SCEN_M[0]; projBa+=v*SCEN_M[1]; projBu+=v*SCEN_M[2];
+        var cur=(h.ccy==='USD'?'$':(h.ccy==='EUR'?'€':''));
+        function cell(mult,c){var pr=p*mult,pct=Math.round((mult-1)*100);return '<td style="text-align:right;color:'+c+'">'+cur+num(pr)+' <span style="font-size:8px">'+(pct>=0?'+':'')+pct+'%</span></td>';}
+        rowsH+='<tr><td>'+esc2(h.name||h.id)+'</td>'
+          +'<td style="text-align:right">'+cur+num(p)+'</td>'
+          +cell(SCEN_M[0],'var(--red)')+cell(SCEN_M[1],'var(--amber)')+cell(SCEN_M[2],'var(--green)')+'</tr>';
       });
-      if(tbl&&rowsH)tbl.innerHTML=rowsH;
+      if(tbl)tbl.innerHTML=rowsH||'<tr><td colspan="5" style="color:var(--text3);font-size:9px;padding:6px">Hisse/kripto pozisyonu yok</td></tr>';
       var bear=Math.round(staticV+projB),base=Math.round(staticV+projBa),bull=Math.round(staticV+projBu);
       var fmtK=function(v){return v>=1000000?'₺'+(v/1000000).toFixed(2)+'M':'₺'+fmt(v);};
       rp('scen-nw','~₺'+fmt(nwv));
@@ -600,7 +593,7 @@ window.loadHistory=loadHistory; // diğer scope'lardan (fiyat-yenile/pipeline) e
 
 // FX CALCULATOR
 // FX senaryo bacakları (updateDashboard canlı veriyle günceller; ilk-render fallback'i latest.json değerleri)
-var _fxLegs={tryFixed:150140,usdLeg:708904,eurLeg:12498,baseUsd:46.3273,baseEur:53.4676};
+var _fxLegs={tryFixed:142450,usdLeg:660800,eurLeg:0,baseUsd:46.00,baseEur:53.00};
 // senaryo çarpanları: baz kura göre −%10 / −%5 / baz / +%10 / +%20 / +%30
 var SCEN_MULT=[-0.10,-0.05,0,0.10,0.20,0.30];
 
@@ -915,11 +908,11 @@ setTimeout(function(){
   fetchJSON('output/latest.json')
     .then(function(d){updateDashboard(d);})
     .catch(function(){
-      updateDashboard({net_worth_try:700000,net_worth_usd:15217,prev_net_worth_try:695000,
+      updateDashboard({net_worth_try:0,net_worth_usd:0,prev_net_worth_try:0,
         fx_rates:{usdtry:46.00,eurtry:53.00},
-        quality_report:{successfully_fetched:8,total_holdings:9},
-        reviewer_findings:[],
-        holdings_with_prices:[{id:'GRAM_ALTIN'},{id:'TL_CASH'},{id:'USD_CASH'},{id:'EUR_CASH'},{id:'NVDA'},{id:'GOOGL'},{id:'TUPRS'},{id:'ASELS'},{id:'MBG'}]
+        quality_report:{successfully_fetched:0,total_holdings:0},
+        reviewer_findings:[{severity:'BİLGİ',issue:'Henüz veri yok. ⚙ Portföy Düzenle ile başlayın ya da AI analizini çalıştırın.'}],
+        holdings_with_prices:[]
       });
     });
 },200);

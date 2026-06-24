@@ -23,7 +23,7 @@ Akış: **intake → connector'dan canlı veri çek → subagent'lara alt görev
 ## Yeni template ekleme (kısa)
 1. `.claude/skills/<template-adi>/SKILL.md` oluştur (frontmatter: `name`, `description`).
 2. Alt görev gerekiyorsa `.claude/agents/<subagent>.md` ekle.
-3. Veri kaynağı için `connectors/live-quotes/README.md`'deki `quote_source → sorgu` eşlemesini genişlet.
+3. Veri kaynağı için `connectors/live-quotes/README.md`'deki `type + ticker → kaynak` eşlemesini genişlet.
 4. `data/` altına örnek girdi koy, çalıştır, `output/` çıktısını kontrol et.
 
 ## Referans
