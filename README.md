@@ -240,6 +240,8 @@ Dockerfile · docker-compose.yml · start.sh · .github/workflows/ci.yml
 | Method · Path | Description |
 |---|---|
 | `GET /api/latest` | Current `output/latest.json` |
+| `GET /api/status` | Pipeline run status (watch after `POST /api/run`) |
+| `GET /api/reports` | List of `output/*.md` skill outputs (F9 panel) |
 | `GET /api/history` | Daily net-worth + token totals |
 | `GET /api/search?q=` | Yahoo symbol search (name → ticker) |
 | `GET /api/portfolio` | Load holdings |
