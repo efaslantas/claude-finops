@@ -16,12 +16,12 @@ phase('Intake')
 const intake = await agent(
   `data/portfolio.json dosyasını oku ve validate et:
   - owner, as_of, base_currency bilgilerini al
-  - holdings[] array: her kalemin id, quantity/amount, quote_source'unu kontrol et
+  - holdings[] array: her kalemin id, quantity/amount, ticker'ını kontrol et
   - fx_assumptions: usdtry ve eurtry varsayımlarını al
   - Aktif (quantity > 0 veya amount > 0) kalem sayısını say
   - Uyarı varsa belirt
 
-  Beklenen 9 holding: TL_CASH, USD_CASH, EUR_CASH, NVDA, GOOGL, TUPRS, ASELS, MBG, GRAM_ALTIN`,
+  Holdings'i portfolio.json holdings[] dizisinden dinamik türet — her kalemin id, type (commodity/cash/equity/crypto/fund), ticker, ccy ve quantity/amount alanlarını ORADAN al; herhangi bir id/sayı varsayma.`,
   {
     label: 'intake-read',
     phase: 'Intake',
@@ -49,44 +49,35 @@ const fetcher = await agent(
   `Sen data-retriever subagent'ısın. Portföy için canlı fiyatları çek.
 
   ÖNCE data/portfolio.json oku — holdings[] içindeki her kalemin
-  id, quote_source ve miktarını (quantity / quantity_grams / amount) ORADAN al.
-  (Miktarları buraya hardcode ETME; tek doğru kaynak portfolio.json'dur.)
-  Beklenen kalemler: TL_CASH, USD_CASH, EUR_CASH, NVDA, GOOGL, TUPRS, ASELS, MBG, GRAM_ALTIN.
+  id, type, ticker, ccy ve miktarını (quantity / amount) ORADAN al.
+  (Miktarları/ticker'ları buraya hardcode ETME; tek doğru kaynak portfolio.json'dur.)
+  Holdings'i portfolio.json holdings[] dizisinden dinamik türet — herhangi bir id/sayı varsayma.
 
   Yahoo Finance v8 API ile fiyatları çek (WebFetch).
   Her URL: JSON yanıtından chart.result[0].meta.regularMarketPrice al.
+  Sembol = holding'in kendi ticker'ı (örn. ticker doğrudan Yahoo sembolü olarak kullanılır).
 
-  URL listesi:
-  1. https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=1d  → usdtry
-  2. https://query1.finance.yahoo.com/v8/finance/chart/EURTRY=X?interval=1d&range=1d  → eurtry
-  3. https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=1d      → xau_usd (USD/troy oz)
-  4. https://query1.finance.yahoo.com/v8/finance/chart/TUPRS.IS?interval=1d&range=1d  → tuprs_price (TRY)
-  5. https://query1.finance.yahoo.com/v8/finance/chart/ASELS.IS?interval=1d&range=1d  → asels_price (TRY)
-  6. https://query1.finance.yahoo.com/v8/finance/chart/NVDA?interval=1d&range=1d      → nvda_price (USD)
-  7. https://query1.finance.yahoo.com/v8/finance/chart/GOOGL?interval=1d&range=1d     → googl_price (USD)
-  8. https://query1.finance.yahoo.com/v8/finance/chart/MBG.DE?interval=1d&range=1d   → mbg_price (EUR)
+  FX kurları:
+  - https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=1d  → usdtry
+  - https://query1.finance.yahoo.com/v8/finance/chart/EURTRY=X?interval=1d&range=1d  → eurtry
+  - Genel olarak base TRY ise, ccy≠TRY her kalem için <CCY>TRY=X kurunu çek.
 
-  Fallback (API başarısız olursa kullan):
-  usdtry=46.31, eurtry=53.85, xau_usd=3300, tuprs=227.50, asels=395.50,
-  nvda=207.32, googl=366.11, mbg=46.90
+  Fiyatlar:
+  - type === 'cash' olmayan her kalem için holding.ticker sembolünü kullanarak fiyatı çek.
 
-  Hesapla:
-  xau_try = xau_usd * usdtry / 31.1035
+  Fallback (FX API başarısız olursa kullan): usdtry=46.31, eurtry=53.85.
 
-  value_try her holding için (miktar = portfolio.json'dan):
-  - GRAM_ALTIN : quantity_grams * xau_try
-  - TL_CASH    : amount (sabit)
-  - USD_CASH   : amount * usdtry
-  - EUR_CASH   : amount * eurtry
-  - NVDA/GOOGL : quantity * price_usd * usdtry
-  - TUPRS/ASELS: quantity * price_try
-  - MBG        : quantity * price_eur * eurtry
+  value_try hesabı (miktar/ticker = portfolio.json'dan, type'a göre):
+  - type === 'cash'      : amount * fx(ccy)   (ccy===base ise rate=1)
+  - type === 'commodity' : quantity * (price / unit_div) * fx(ccy)
+                           unit === 'gram' ise unit_div = 31.1035, değilse 1
+  - diğer (equity/crypto/fund): quantity * price * fx(ccy)
 
   net_worth_try = sum(tüm value_try)
   net_worth_usd = net_worth_try / usdtry
 
   Çıktı: holdings_with_prices dizisinde her kalem için:
-  {id, price_native, currency_native, price_try, value_try, source, timestamp}`,
+  {id, type, price_native, currency_native, price_try, value_try, source, timestamp}`,
   {
     label: 'data-retriever-fetch',
     phase: 'Connector',
@@ -118,7 +109,7 @@ const reviewer = await agent(
 
   A) METODOLOJİ & TUTARLILIK:
   - quantity × price_try = value_try doğru mu? Örnekle kontrol et.
-  - 9 holding taranmış mı? Eksik varsa flag et.
+  - holdings_with_prices'taki tüm kalemler taranmış mı? Eksik varsa flag et.
   - FX kurları tek kaynaktan mı? Tutarlı mı?
   - Zaman damgası tutarlılığı (tüm fiyatlar aynı pencereden mi?)
 
@@ -211,11 +202,15 @@ const rebalResult = await agent(
   NET DEĞER: ₺${Math.round(fetcher.net_worth_try).toLocaleString('tr-TR')}
 
   VARLIK SINIFI DAĞILIMI (mevcut):
-  ${JSON.stringify({
-    Emtia: { value: Math.round((fetcher.holdings_with_prices || []).find(h=>h.id==='GRAM_ALTIN')?.value_try||0) },
-    Nakit: { value: Math.round(((fetcher.holdings_with_prices || []).find(h=>h.id==='TL_CASH')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='USD_CASH')?.value_try||0)) },
-    Hisse: { value: Math.round(((fetcher.holdings_with_prices || []).find(h=>h.id==='NVDA')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='GOOGL')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='TUPRS')?.value_try||0) + ((fetcher.holdings_with_prices || []).find(h=>h.id==='ASELS')?.value_try||0)) }
-  }, null, 2)}
+  ${JSON.stringify((() => {
+    const TYPE_CLASS = { commodity:'Emtia', cash:'Nakit', equity:'Hisse', crypto:'Kripto', fund:'Fon' }
+    const classes = {}
+    for (const h of (fetcher.holdings_with_prices || [])) {
+      const cls = TYPE_CLASS[(h.type||'equity').toLowerCase()] || 'Diğer'
+      classes[cls] = (classes[cls]||0) + Math.round(h.value_try||0)
+    }
+    return Object.fromEntries(Object.entries(classes).map(([k,v]) => [k, { value: v }]))
+  })(), null, 2)}
 
   Hedef dağılım: Emtia %40 · Nakit %20 · Hisse %40 (tolerans ±5%)
   Her sınıf için: mevcut %, hedef %, sapma, gerekli işlem (SAT/AL/DENGE) hesapla.
@@ -230,31 +225,32 @@ log(`Rebalance: ${rebalResult?.rebalance_needed ? 'Dengeleme gerekli — '+rebal
 // ── PHASE 6: SYNTHESIS — output/latest.json Yaz ──────────────────────────
 phase('Synthesis')
 
-// holdings_with_prices'dan id → holding map
+// holdings_with_prices (schema-driven — type'a göre kırılım, pipeline_server.py ile uyumlu)
 const hp = fetcher.holdings_with_prices || []
-const byId = (id) => hp.find(h => h.id === id) || {}
 const usdtry = fetcher.fx_rates.usdtry || 46.31
 const eurtry = fetcher.fx_rates.eurtry || 53.85
 const nwt    = Math.round(fetcher.net_worth_try)
 const nwu    = Math.round(fetcher.net_worth_usd)
-
-const vAltin = Math.round(byId('GRAM_ALTIN').value_try || 0)
-const vNakit = Math.round((byId('TL_CASH').value_try || 0) + (byId('USD_CASH').value_try || 0) + (byId('EUR_CASH').value_try || 0))
-const vHisse = Math.round((byId('NVDA').value_try || 0) + (byId('GOOGL').value_try || 0) + (byId('TUPRS').value_try || 0) + (byId('ASELS').value_try || 0) + (byId('MBG').value_try || 0))
 const pct    = (v) => Math.round(v / nwt * 10000) / 100
+
+const TYPE_CLASS = { commodity:'Emtia', cash:'Nakit', equity:'Hisse', crypto:'Kripto', fund:'Fon' }
+const classes = {}
+for (const h of hp) {
+  const cls = TYPE_CLASS[(h.type||'equity').toLowerCase()] || 'Diğer'
+  classes[cls] = (classes[cls]||0) + Math.round(h.value_try||0)
+}
+const asset_class_breakdown = Object.fromEntries(
+  Object.entries(classes).map(([k,v]) => [k, { value: v, percentage: pct(v) }]))
 
 const latestJson = {
   net_worth_try: nwt,
   net_worth_usd: nwu,
   fx_rates: { usdtry, eurtry },
-  asset_class_breakdown: {
-    'Emtia': { value: vAltin, percentage: pct(vAltin) },
-    'Nakit': { value: vNakit, percentage: pct(vNakit) },
-    'Hisse': { value: vHisse, percentage: pct(vHisse) }
-  },
+  asset_class_breakdown,
   // miktarlar fetcher'dan (data/portfolio.json kaynaklı) — burada hardcode YOK
   holdings_with_prices: hp.map(h => ({
     id: h.id,
+    ...(h.type != null ? { type: h.type } : {}),
     ...(h.quantity_grams != null ? { quantity_grams: h.quantity_grams } : {}),
     ...(h.quantity != null ? { quantity: h.quantity } : {}),
     ...(h.amount != null ? { amount: h.amount } : {}),
@@ -263,9 +259,9 @@ const latestJson = {
     value_try: Math.round(h.value_try || 0)
   })),
   quality_report: {
-    total_holdings:       9,
-    // TL_CASH sabit; geri kalan 8 kalemi fiyat verisi varlığından say
-    successfully_fetched: hp.filter(h => h.id !== 'TL_CASH' && ((h.price_try || h.price_native || h.price || h.rate || 0) > 0)).length
+    total_holdings:       hp.length,
+    // cash sabit (fiyat çekilmez); geri kalan kalemleri fiyat verisi varlığından say
+    successfully_fetched: hp.filter(h => (h.type||'equity').toLowerCase() !== 'cash' && ((h.price_try || h.price_native || h.price || h.rate || 0) > 0)).length
   },
   reviewer_findings: reviewer.findings
 }

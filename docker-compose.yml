@@ -3,6 +3,12 @@ services:
     build: .
     image: claude-finops-terminal
     container_name: finops-terminal
+    # Linux: bind-mounted ./data & ./output keep host ownership, overriding the
+    # Dockerfile's chown for the non-root 'finops' user. Run as the host owner's
+    # uid/gid so the server can write output/*.json and data/portfolio.json.
+    # macOS/Windows Docker Desktop ignore this for bind mounts (harmless).
+    # Invoke on Linux with: UID=$(id -u) GID=$(id -g) docker compose up --build
+    user: "${UID:-1000}:${GID:-1000}"
     ports:
       - "127.0.0.1:8765:8765"   # sadece localhost — LAN'a açma
     environment:

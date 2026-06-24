@@ -220,7 +220,7 @@ the signal file and runs the workflow.
 ```
 index.html               → terminal UI (single page, no build step)
 assets/css/terminal.css  → dark terminal theme
-assets/js/terminal.js    → all UI logic (vanilla JS, no framework)
+assets/js/               → UI logic: terminal.js + portfolio-edit.js (vanilla JS, no framework)
 assets/fonts/            → self-hosted JetBrains Mono (no CDN dependency)
 pipeline_server.py       → static server + /api bridge (stdlib only)
 .claude/

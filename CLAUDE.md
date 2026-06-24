@@ -1,8 +1,8 @@
-# claude-finops — FinOps Agent Lab
+# Claude FinOps Terminal — Geliştirici Notları
 
-Bu klasör, Anthropic'in 5 Mayıs 2026'da duyurduğu **finance agent template** yaklaşımını
-(skill + connector + subagent) Claude Code'un native yapısı üzerinde prototiplemek için
-açılmış bir **sandbox**'tır. Production değil; deneme/öğrenme amaçlı.
+Bu repo, Anthropic'in **finance agent template** yaklaşımını (skill + connector + subagent)
+Claude Code'un native yapısı üzerinde uygulayan bir referans implementasyondur.
+Eğitim amaçlıdır; yatırım tavsiyesi değildir.
 
 ## Kompozisyon (3 parça)
 

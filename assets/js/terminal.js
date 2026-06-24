@@ -282,21 +282,19 @@ function updateDashboard(data){
     // ticker'ın kayan kopya setini canlı ilk setle senkronla (stale 387,75 vb. kalmasın)
     try{var _trk=document.getElementById('ticker-track');if(_trk){var _it=_trk.querySelectorAll('.ticker-item');var _half=_it.length/2;for(var _k=_half;_k<_it.length;_k++){_it[_k].innerHTML=_it[_k-_half].innerHTML;}}}catch(e4){}
 
-    function htSet(id,pval,vval){
-      var pe=document.getElementById('ht-'+id+'-p'),ve=document.getElementById('ht-'+id+'-v'),ce=document.getElementById('ht-'+id+'-pct');
-      if(pe&&pval!==undefined)pe.textContent=pval;
-      if(ve&&vval!==undefined)ve.textContent='₺'+fmt(vval);
-      if(ce&&vval!==undefined)ce.textContent=(vval/nwv*100).toFixed(1)+'%';
+    // POZİSYONLAR tablosu (#holdings-rows) — hp dizisinden canlı doldur
+    var hb=document.getElementById('holdings-rows');
+    if(hb){
+      var clsMap={commodity:'Emtia',cash:'Nakit',equity:'Hisse',crypto:'Kripto'};
+      var rows=hp.map(function(h){
+        var price=(h.price_try!=null?'₺'+num(h.price_try):(h.price!=null?num(h.price):'—'));
+        var val=h.value_try||0;
+        var wt=nwv?(val/nwv*100).toFixed(1):'0.0';
+        var qty=(h.quantity!=null?num(h.quantity):(h.amount!=null?num(h.amount):'—'));
+        return '<tr><td>'+esc2(h.name||h.id)+'</td><td style="text-align:right">'+qty+'</td><td style="text-align:right">'+price+'</td><td style="text-align:right">₺'+fmt(val)+'</td><td style="text-align:right">'+wt+'%</td><td style="text-align:right">'+esc2(clsMap[h.type]||h.type||'—')+'</td></tr>';
+      }).join('');
+      hb.innerHTML=rows||'<tr><td colspan="6" style="color:var(--text3);font-size:9px;padding:6px">Veri yok</td></tr>';
     }
-    if(xau)   htSet('altin', num(xau.price_try),   xau.value_try);
-    if(usdH)  htSet('usd',   num(fx.usdtry||0),    usdH.value_try);
-    if(nvdaH) htSet('nvda',  '$'+num(nvdaH.price),  nvdaH.value_try);
-    if(googlH)htSet('googl', '$'+num(googlH.price), googlH.value_try);
-    if(tuprs) htSet('tuprs', num(tuprs.price),      tuprs.value_try);
-    if(asels) htSet('asels', num(asels.price),      asels.value_try);
-    if(mbgH)  htSet('mbg',   '€'+num(mbgH.price),   mbgH.value_try);
-    var tlv=document.getElementById('ht-tl-pct');if(tlv&&tlH)tlv.textContent=(tlH.value_try/nwv*100).toFixed(1)+'%';
-    var totEl=document.getElementById('ht-total-v');if(totEl)totEl.textContent='₺'+fmt(nwv);
 
     // F7 PİYASA TAKİP: portföy holdings (★) + izleme listesi, canlı
     if(typeof renderMarketWatch==='function')renderMarketWatch(data);
@@ -462,6 +460,7 @@ fetchJSON('output/watchlist.json').then(function(d){
 // ── ANALİZ RAPORLARI (F9) ──────────────────────────────────────────────
 var KIND_LBL={research:'ARAŞTIRMA',valuation:'DEĞERLEME',model:'MODEL',earnings:'KAZANÇ',net:'NET-DEĞER',portfolio:'SNAPSHOT',yearend:'YIL-SONU',de:'WATCHLIST'};
 function esc2(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){return esc2(s).replace(/"/g,'&quot;');}
 function fmtTime(ts){try{var d=new Date(ts*1000);return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}catch(e){return '';}}
 // kompakt markdown → html
 function mdToHtml(md){
@@ -743,7 +742,7 @@ document.addEventListener('keydown',function(e){
         +'<span>'+esc2(a.publisher||'')+'</span>'
         +'<span style="color:'+bcolor+'">'+badge+' · '+date+'</span></div>'
         +'<div style="font-size:10px;line-height:1.4;color:var(--text)">'+esc2(a.title||'')+'</div>'
-        +(a.link?'<div style="margin-top:4px"><a href="'+esc2(a.link)+'" target="_blank" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
+        +(a.link&&/^https?:\/\//i.test(a.link)?'<div style="margin-top:4px"><a href="'+escAttr(a.link)+'" target="_blank" rel="noopener noreferrer" style="font-size:8px;color:var(--accent)">Oku →</a></div>':'')
         +'</div>';
     });
     out.innerHTML=html;

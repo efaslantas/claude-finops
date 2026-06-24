@@ -17,6 +17,10 @@ COPY output ./output
 
 EXPOSE 8765
 
+# Liveness probe — stdlib-only (urllib), /api/status her zaman 200 döner
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/api/status', timeout=2).status==200 else 1)"]
+
 # Root olarak çalıştırma — ayrı kullanıcı oluştur
 RUN useradd --no-create-home --shell /bin/false finops && \
     chown -R finops:finops /app

@@ -18,7 +18,7 @@ claude/alt süreç çalıştırmaz; AI işini açık Claude Code session'ı (wat
 import json, re, logging, threading, os, time, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from datetime import datetime, timezone
-from urllib.parse import urlparse, parse_qs, quote
+from urllib.parse import urlparse, parse_qs, quote, unquote
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -273,7 +273,10 @@ def fetch_dividends():
         if typ not in ("equity", "fund"):
             continue
         hid = h.get("id", ""); tk = h.get("ticker", hid)
-        url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{tk}?modules=summaryDetail"
+        if not safe_ticker(tk):
+            results.append({"id": hid, "ticker": tk, "error": "geçersiz ticker"})
+            continue
+        url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{quote(tk)}?modules=summaryDetail"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         try:
             with urllib.request.urlopen(req, timeout=6) as r:
@@ -353,7 +356,7 @@ def compute_rebalance():
 
 class Handler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
-        self._cors(); self.end_headers()
+        self.send_response(204); self._cors(); self.end_headers()
 
     def do_GET(self):
         if self.path.startswith("/api/status"):
@@ -369,7 +372,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self._json(dict(STATUS))
         elif self.path.startswith("/api/latest"):
             try:
-                with open("output/latest.json") as f: raw = f.read()
+                with open("output/latest.json", encoding="utf-8") as f: raw = f.read()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self._cors(); self.end_headers()
@@ -378,7 +381,6 @@ class Handler(SimpleHTTPRequestHandler):
                 self._json({"error": "output/latest.json bulunamadı"}, 404)
         elif self.path.startswith("/api/search"):
             # Yahoo Finance sembol araması — kullanıcı isim yazar, biz ticker öneririz
-            from urllib.parse import urlparse, parse_qs, quote
             q = (parse_qs(urlparse(self.path).query).get("q", [""])[0]).strip()
             if not q:
                 return self._json({"results": []})
@@ -443,7 +445,7 @@ class Handler(SimpleHTTPRequestHandler):
                     kind = fn.split("-")[0]
                     title = ""
                     try:
-                        with open(path) as f:
+                        with open(path, encoding="utf-8") as f:
                             for line in f:
                                 if line.startswith("#"):
                                     title = line.lstrip("#").strip(); break
@@ -460,15 +462,30 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({"reports": reports})
         else:
             clean = urlparse(self.path).path
-            if (clean in ("/", "/index.html")
+            # Encoded/literal '..' traversal is rejected outright (also catches %2e%2e).
+            if ".." not in unquote(clean) and (
+                    clean in ("/", "/index.html")
                     or clean.startswith("/assets/")
                     or clean.startswith("/output/")):
-                super().do_GET()
-            else:
-                self.send_response(403)
-                self.send_header("Content-Type", "text/plain")
-                self.end_headers()
-                self.wfile.write(b"Forbidden")
+                # Raw prefix passes; now confirm the RESOLVED path stays in-bounds.
+                # translate_path collapses '..' and re-roots under cwd, so this
+                # blocks /output/../pipeline_server.py and /assets/../data/portfolio.json.
+                cwd = os.path.realpath(os.getcwd())
+                resolved = os.path.realpath(self.translate_path(self.path))
+                allowed_dirs = (os.path.join(cwd, "assets"), os.path.join(cwd, "output"))
+                in_bounds = (
+                    resolved == cwd                                  # directory root "/"
+                    or resolved == os.path.join(cwd, "index.html")   # explicit index
+                    or any(resolved == d or resolved.startswith(d + os.sep)
+                           for d in allowed_dirs)
+                )
+                if in_bounds:
+                    super().do_GET()
+                    return
+            self.send_response(403)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"Forbidden")
 
     def do_POST(self):
         if self.path.startswith("/api/portfolio"):
@@ -513,7 +530,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json({"error": f"Çok sık — lütfen {REFRESH_COOLDOWN}s bekleyin"}, 429)
             with LOCK:
                 if STATUS.get("state") == "refreshing":
-                    return self._json({"error": "Yenileme zaten sürüyor"})
+                    return self._json({"error": "Yenileme zaten sürüyor"}, 409)
                 STATUS.update({"state": "refreshing", "message": "Canlı fiyatlar çekiliyor...", "progress": 30})
             _last_refresh = now
             try:
@@ -538,12 +555,18 @@ class Handler(SimpleHTTPRequestHandler):
             r = record_run(tokens)
             self._json({"status": "recorded", **r})
         elif self.path.startswith("/api/alerts"):
-            ln = int(self.headers.get("Content-Length", 0))
-            if ln > MAX_BODY:
-                return self._json({"error": "İstek çok büyük"}, 413)
-            body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
-            save_alerts(body)
-            self._json({"status": "saved"})
+            try:
+                ln = int(self.headers.get("Content-Length", 0))
+                if ln > MAX_BODY:
+                    return self._json({"error": "İstek çok büyük"}, 413)
+                body = json.loads(self.rfile.read(ln).decode("utf-8")) if ln else {}
+                if not isinstance(body, dict):
+                    return self._json({"error": "Geçersiz istek"}, 400)
+                save_alerts(body)
+                self._json({"status": "saved"})
+            except Exception as e:
+                logging.warning("save_alerts: %s", e)
+                self._json({"error": "Geçersiz istek"}, 400)
         elif self.path.startswith("/api/rebalance"):
             self._json(compute_rebalance())
         elif self.path.startswith("/api/run"):

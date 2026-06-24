@@ -28,9 +28,10 @@ Portföyün holding'lerinin canlı piyasa fiyatlarını çek, TRY'ye dönüştü
 
 ### 1. Portfolio Oku
 ```
-data/portfolio.json → holdings[].{id, quote_source, quantity}
-holdings[]'den sadece null olmayan quantity'leri işle.
-fx_assumptions (usdtry, eurtry) başlangıç değeri olarak tutun.
+data/portfolio.json → her holding'ten {id, type, ticker, quantity|amount|quantity_grams} oku.
+ticker/type'a göre fetch yöntemini belirle (aşağıdaki eşleme).
+quantity/amount null olan satırları atla.
+fx_assumptions (varsa usdtry, eurtry) başlangıç değeri olarak tutun.
 ```
 
 ### 2. Her Holding İçin WebFetch Yap (Yahoo Finance v8 API)
@@ -38,17 +39,16 @@ fx_assumptions (usdtry, eurtry) başlangıç değeri olarak tutun.
 URL formatı: `https://query1.finance.yahoo.com/v8/finance/chart/{TICKER}?interval=1d&range=1d`
 Değer: `JSON.chart.result[0].meta.regularMarketPrice`
 
-| Holding | Ticker | Miktar | Para |
-|---------|--------|--------|------|
-| GRAM_ALTIN | GC=F (USD/oz → gram TRY: price × usdtry / 31.1035) | 50 gram | TRY |
-| TL_CASH | sabit, fetch gerekmez | 100000 TL | TRY |
-| USD_CASH | USDTRY=X | 1000 USD | USD |
-| EUR_CASH | EURTRY=X | 0 EUR | EUR |
-| NVDA | NVDA | 5 adet | USD |
-| GOOGL | GOOGL | 2.5 adet | USD |
-| TUPRS | TUPRS.IS | 100 lot | TRY |
-| ASELS | ASELS.IS | 50 lot | TRY |
-| MBG | MBG.DE | 5 adet | EUR |
+Her holding'in ticker/currency/quantity'sini `type`'ından türet (portföy şemasına bağımsız):
+
+| `type` | Ticker / Yöntem | Para | Not |
+|--------|-----------------|------|-----|
+| `commodity` | holding'in ticker'ı (ör. `GC=F` = XAU/oz proxy); gram TRY: `price_usd × usdtry / 31.1035` | TRY | `quantity_grams` kullan |
+| `cash` | TRY ise sabit (fetch yok); değilse FX çevir (ör. `USDTRY=X`) | native ccy | `amount` kullan |
+| `equity` | holding'in ticker'ı, Yahoo'dan çek; BIST hisseleri `.IS` son ekli | native ccy | `quantity` kullan |
+| `crypto` | holding'in ticker'ı (ör. `BTC-USD`) | USD | `quantity` kullan |
+
+Örnek (data/portfolio.sample.json id'leri): GOLD_GRAM, TRY_CASH, USD_CASH, NVDA, GOOGL, TUPRS, ASELS, BTC.
 
 ### 3. Para Dönüştürü (USD/EUR → TRY)
 - USD holding: `price_usd × usdtry_rate` → TRY
@@ -61,20 +61,19 @@ Değer: `JSON.chart.result[0].meta.regularMarketPrice`
 {
   "fx_rates": { "usdtry": 46.31, "eurtry": 53.85 },
   "holdings_with_prices": [
-    { "id": "GRAM_ALTIN", "quantity_grams": 50, "price_native": 6500.0, "currency_native": "TRY", "price_try": 6500.0, "value_try": 325000, "source": "yahoo/GC=F" },
-    { "id": "TL_CASH",    "amount": 100000, "currency_native": "TRY", "price_try": 1, "value_try": 100000, "source": "sabit" },
+    { "id": "GOLD_GRAM", "quantity_grams": 50, "price_native": 6500.0, "currency_native": "TRY", "price_try": 6500.0, "value_try": 325000, "source": "yahoo/GC=F" },
+    { "id": "TRY_CASH",   "amount": 100000, "currency_native": "TRY", "price_try": 1, "value_try": 100000, "source": "sabit" },
     { "id": "USD_CASH",   "amount": 1000, "currency_native": "USD", "price_try": 46.00, "value_try": 46000, "source": "yahoo/USDTRY=X" },
-    { "id": "EUR_CASH",   "amount": 0, "currency_native": "EUR", "price_try": 53.00, "value_try": 0, "source": "yahoo/EURTRY=X" },
     { "id": "NVDA",       "quantity": 4, "price_native": 205.00, "currency_native": "USD", "price_try": 9430.0, "value_try": 37720, "source": "yahoo/NVDA" },
     { "id": "GOOGL",      "quantity": 2, "price_native": 365.00, "currency_native": "USD", "price_try": 16790.0, "value_try": 33580, "source": "yahoo/GOOGL" },
     { "id": "TUPRS",      "quantity": 100, "price_native": 227.00, "currency_native": "TRY", "price_try": 227.00, "value_try": 22700, "source": "yahoo/TUPRS.IS" },
     { "id": "ASELS",      "quantity": 50, "price_native": 395.00, "currency_native": "TRY", "price_try": 395.00, "value_try": 19750, "source": "yahoo/ASELS.IS" },
-    { "id": "MBG",        "quantity": 5, "price_native": 47.00, "currency_native": "EUR", "price_try": 2491.0, "value_try": 12455, "source": "yahoo/MBG.DE" }
+    { "id": "BTC",        "quantity": 0.05, "price_native": 95000.0, "currency_native": "USD", "price_try": 4370000.0, "value_try": 218500, "source": "yahoo/BTC-USD" }
   ],
-  "net_worth_try": 697205,
-  "net_worth_usd": 15157,
+  "net_worth_try": 803250,
+  "net_worth_usd": 17464,
   "quality_report": {
-    "total_holdings": 9,
+    "total_holdings": 8,
     "successfully_fetched": 8,
     "failed_fetches": 0,
     "warnings": []
