@@ -1,5 +1,7 @@
 <div align="center">
 
+![Claude FinOps Terminal](docs/banner.svg)
+
 # Claude FinOps Terminal
 
 **A reference implementation of Claude's finance capabilities —
