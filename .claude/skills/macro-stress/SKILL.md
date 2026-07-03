@@ -4,15 +4,15 @@ description: >
   Macro stress-test: simulate how a portfolio reacts to central bank rate changes,
   inflation shocks, currency devaluations or commodity price shifts. Claude builds
   the sensitivity model from the portfolio's own data — no hardcoded assumptions.
-  Leverages extended thinking for step-by-step impact reasoning.
+  Step-by-step impact reasoning is written into the output so it stays auditable.
 ---
 
 # Macro Stress Test
 
 **What Claude does here:** Claude reasons step-by-step through each asset's exposure to
 a macro shock — correlations, FX pass-through, sector sensitivities — rather than
-applying a flat percentage. Extended thinking traces the reasoning so results are
-auditable.
+applying a flat percentage. The reasoning is written into the report itself so
+results are auditable (internal thinking is not visible to the reader).
 
 ## Trigger phrases
 
@@ -51,7 +51,7 @@ Parse the user's stress scenario. Convert natural language to parameters:
 
 If the user specifies multiple shocks, model them simultaneously (additive first-order).
 
-### Phase 3 — Impact model (extended thinking)
+### Phase 3 — Impact model (step-by-step, written out)
 
 For each holding, reason through:
 

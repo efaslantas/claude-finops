@@ -33,14 +33,14 @@ tax harvesting, news sentiment, benchmarking and rebalance suggestions.**
 
 Most financial tools use Claude as a chatbot layer on top of a data pipeline.
 This project flips that: **Claude is the pipeline.** Every analysis runs through
-Claude's native capabilities — long context, vision, extended thinking, tool use,
+Claude's native capabilities — long context, vision, adaptive thinking, tool use,
 parallel agents — not a fixed rule engine.
 
 | Claude capability | How it's used here |
 |---|---|
-| **200k token context** | Read an entire 200-page annual report in one pass — not a summary, the whole thing |
+| **1M token context** | Read an entire 200-page annual report in one pass — not a summary, the whole thing |
 | **Vision / PDF** | Parse 10-K filings, scanned bank statements, chart screenshots natively — no OCR pre-step |
-| **Extended thinking** | Step-by-step DCF reasoning, macro sensitivity chains, tax optimization logic |
+| **Adaptive thinking** | Step-by-step DCF reasoning, macro sensitivity chains, tax optimization logic |
 | **Parallel subagents** | News sentiment + index benchmarking run simultaneously in the Intel phase |
 | **Tool use / MCP** | Yahoo Finance connector wired natively — no middleware, no API key |
 | **Structured output** | Risk findings, portfolio data, stress test results returned as strict JSON schemas |
@@ -74,7 +74,7 @@ parallel agents — not a fixed rule engine.
 | Options pricing (Black-Scholes + Greeks) | `options-pricer` | ✅ |
 | M&A due diligence | `ma-screener` | ✅ |
 | Chart vision (screenshot → pattern) | `chart-reader` | ✅ |
-| Extended thinking DCF | `dcf-thinking` | ✅ |
+| Adaptive thinking DCF | `dcf-thinking` | ✅ |
 | Dividend reinvestment optimizer | `drip-optimizer` | ✅ |
 | Bond yield / duration / credit risk | `credit-analyzer` | ✅ |
 | Macro calendar + portfolio pre-brief | `macro-calendar` | ✅ |
@@ -165,14 +165,14 @@ Reference implementation of Anthropic's **skill + connector + subagent** finance
 | `gl-reconciler` | Long context, structured output | Bank statement → reconciliation report |
 | `month-end-closer` | Long context, reasoning | Monthly P&L + FX impact from history |
 | `kyc-screener` | Web search, reasoning | 5-dimension KYC screening |
-| `pdf-analyzer` | Vision, 200k context | Annual reports, 10-K, PDF statements |
-| `macro-stress` | Extended thinking, reasoning | Fed/inflation/FX shock → portfolio impact |
+| `pdf-analyzer` | Vision, 1M context | Annual reports, 10-K, PDF statements |
+| `macro-stress` | Adaptive thinking, reasoning | Fed/inflation/FX shock → portfolio impact |
 | `tax-harvester` | Reasoning, structured output | Tax-loss candidates + savings estimate |
 | `options-pricer` | Reasoning, structured output | Black-Scholes + binomial + Greeks (Δ Γ Θ Vega Rho) |
 | `monte-carlo` | Reasoning, structured output | GBM simulation, P10/P50/P90 percentiles |
 | `ma-screener` | Web search, reasoning | 5-workstream M&A due diligence + scoring |
 | `chart-reader` | **Vision** | Screenshot → trend, patterns, support/resistance |
-| `dcf-thinking` | **Extended thinking** | Step-by-step DCF valuation, auditable reasoning |
+| `dcf-thinking` | **Adaptive thinking** | Step-by-step DCF valuation, auditable reasoning |
 | `drip-optimizer` | Reasoning, structured output | Dividend reinvestment compound growth projections |
 | `credit-analyzer` | Reasoning, structured output | Bond YTM, duration, convexity, credit spread |
 | `macro-calendar` | Web search, reasoning | Upcoming events → per-holding impact scenarios |
@@ -310,7 +310,7 @@ Open a Claude Code session in the project directory, then use any trigger phrase
 "Valuation: TUPRS — P/E, EV/EBITDA, peer comparison"
 
 # Quantitative
-"NVDA DCF değerlemesi yap"            → dcf-thinking (extended thinking)
+"NVDA DCF değerlemesi yap"            → dcf-thinking (adaptive thinking)
 "Monte Carlo sim: 10 yıl, $50k hedef" → monte-carlo
 "NVDA call opsiyonu fiyatla: K=150, T=90gün, σ=0.45" → options-pricer
 "Temettü yeniden yatırım analizi: TUPRS 10 yıl" → drip-optimizer
@@ -412,14 +412,14 @@ PDF rapor okuma + makro stres testi + vergi hasadı al. Sıfır çalışma-zaman
 ### Neden Claude?
 
 Çoğu finansal araç Claude'u bir chatbot katmanı olarak kullanır. Bu proje tersini yapar:
-**Claude pipeline'ın kendisidir.** 200 000 token bağlam, vision/PDF okuma, extended thinking,
+**Claude pipeline'ın kendisidir.** 1M token bağlam, vision/PDF okuma, adaptive thinking,
 paralel subagent'lar — hepsi doğrudan kullanılır.
 
 | Claude kapasitesi | Burada nasıl kullanılıyor |
 |---|---|
-| **200k bağlam** | 200 sayfalık yıllık raporu tek geçişte oku |
+| **1M bağlam** | 200 sayfalık yıllık raporu tek geçişte oku |
 | **Vision / PDF** | 10-K, banka ekstresi, grafik ekran görüntüsü — OCR gerekmez |
-| **Extended thinking** | DCF, makro duyarlılık zinciri, vergi optimizasyonu adım adım |
+| **Adaptive thinking** | DCF, makro duyarlılık zinciri, vergi optimizasyonu adım adım |
 | **Paralel subagent** | Haber sentiment + endeks karşılaştırması aynı anda çalışır |
 | **Tool use** | Yahoo Finance connector — middleware yok, API anahtarı yok |
 | **Çok dilli** | Türkçe ve İngilizce finansal analiz, tam bağlamla |
