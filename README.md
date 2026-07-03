@@ -14,9 +14,9 @@
 
 | Claude kapasitesi | Burada nasıl kullanılıyor |
 |---|---|
-| **200k bağlam** | 200 sayfalık yıllık raporu tek geçişte oku |
+| **1M bağlam** | Yüzlerce sayfalık yıllık raporu tek geçişte oku |
 | **Vision / PDF** | 10-K, banka ekstresi, grafik ekran görüntüsü — OCR gerekmez |
-| **Extended thinking** | DCF, makro duyarlılık zinciri, vergi optimizasyonu adım adım |
+| **Adaptive thinking** | DCF, makro duyarlılık zinciri, vergi optimizasyonu adım adım |
 | **Paralel subagent** | Haber sentiment + endeks karşılaştırması aynı anda |
 | **Tool use** | Yahoo Finance connector — middleware yok, API anahtarı yok |
 | **Çok dilli** | Türkçe/İngilizce finansal analiz, tam bağlamla |
@@ -46,8 +46,8 @@ Cost basis için: `cost_basis_per_unit` + `purchase_date` alanlarını ekle (ver
 | `gl-reconciler` | Long context, structured output |
 | `month-end-closer` | Long context, reasoning |
 | `kyc-screener` | Web search, reasoning |
-| **`pdf-analyzer`** | **Vision, 200k context** |
-| **`macro-stress`** | **Extended thinking** |
+| **`pdf-analyzer`** | **Vision, 1M context** |
+| **`macro-stress`** | **Adaptive thinking** |
 | **`tax-harvester`** | **Reasoning, structured output** |
 
 ## 5 Subagent

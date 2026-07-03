@@ -1,19 +1,20 @@
 ---
 name: dcf-thinking
 description: >
-  Discounted Cash Flow valuation with extended thinking. Claude reasons
-  step-by-step through revenue projections, EBITDA margins, CapEx, working
-  capital, WACC components, and terminal value — showing all assumptions
-  and sensitivity analysis. The extended thinking trace is the output:
-  every assumption is auditable.
+  Discounted Cash Flow valuation with step-by-step auditable reasoning.
+  Claude reasons through revenue projections, EBITDA margins, CapEx, working
+  capital, WACC components, and terminal value — writing every assumption,
+  its justification, and the sensitivity analysis into the visible output.
+  The written reasoning is the deliverable: every assumption is auditable.
 ---
 
-# DCF Valuation (Extended Thinking)
+# DCF Valuation (Auditable Reasoning)
 
-**What Claude does here:** Uses extended thinking to build a full DCF model
-step-by-step, showing every assumption and its justification. Unlike a spreadsheet,
-each cell is explained — *why* this growth rate, *why* this margin, *why* this WACC.
-The reasoning trace is as valuable as the number.
+**What Claude does here:** Builds a full DCF model step-by-step, **writing every
+assumption and its justification into the response and the output artifact** —
+not leaving it in internal thinking, which is never visible to the reader.
+Unlike a spreadsheet, each cell is explained — *why* this growth rate, *why* this
+margin, *why* this WACC. The written reasoning is as valuable as the number.
 
 ## Trigger phrases
 - "NVDA DCF değerlemesi yap"
@@ -38,7 +39,7 @@ Fetch via WebSearch + WebFetch (Yahoo Finance quoteSummary):
 
 ### Phase 2 — Revenue projection (5 years)
 
-**Extended thinking step:** Reason through growth rate assumptions:
+**Reasoning step (write it out):** Reason through growth rate assumptions:
 1. Historical growth rate — starting point
 2. Analyst consensus (WebSearch: "[company] revenue forecast 2025 2026")
 3. Market growth rate — industry TAM expansion
@@ -50,7 +51,7 @@ Output: year 1-5 revenue with explicit rationale for each year's growth rate.
 
 ### Phase 3 — EBITDA margin projection
 
-**Extended thinking step:**
+**Reasoning step (write it out):**
 - Operating leverage: how does margin behave as revenue grows?
 - Investment cycle: is the company in heavy CapEx mode (margin compression) or harvesting?
 - Sector comparison: is current margin above/at/below peers?
@@ -77,7 +78,7 @@ Tax rate: use effective rate from financials (typically 20-28% for US, 22% for T
 
 ### Phase 5 — WACC computation
 
-**Extended thinking step — each component justified:**
+**Reasoning step — each component justified in the output:**
 
 **Cost of equity (CAPM):**
 ```
@@ -99,7 +100,7 @@ WACC = (E/V) × Ke + (D/V) × Kd
 ```
 Where E = market cap, D = net debt, V = E + D.
 
-**Extended thinking check:** Is this WACC reasonable for this sector?
+**Sanity check (state it in the output):** Is this WACC reasonable for this sector?
 Compare to sector WACC range. Flag if >15% or <6%.
 
 ### Phase 6 — Terminal value
