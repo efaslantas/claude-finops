@@ -5,6 +5,9 @@ data/*.json
 
 output/*.json
 output/*.md
+# yedek kopyalar — gercek portfoy verisi tasir, asla commit'lenmesin
+*.yedek*
+*.bak
 !output/*.sample.json
 !output/README.md
 

@@ -825,6 +825,11 @@ document.addEventListener('keydown',function(e){
     if(d.error){if(rbSumm)rbSumm.textContent=d.error;return;}
     if(rbSumm)rbSumm.textContent=d.summary||'';
     var cur=d.current||{},tgt=d.targets||{},dev=d.deviations||{};
+    var hint=document.getElementById('rebalance-target-hint');
+    if(hint){
+      var parts=Object.keys(tgt).map(function(k){return esc2(k)+' %'+(+(tgt[k]||0).toFixed(1));});
+      hint.textContent=parts.length?('· hedef: '+parts.join(' · ')):'· hedef tanımlı değil';
+    }
     var html='';
     Object.keys(tgt).forEach(function(cls){
       var c=cur[cls]||0,t=tgt[cls]||0,dv=dev[cls]||0;
